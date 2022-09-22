@@ -62,7 +62,7 @@ def intersect(objects):
         first.select_set(True)
         bpy.context.view_layer.objects.active = first
         bpy.ops.object.modifier_add(type="BOOLEAN")
-        modifier = bpy.context.object.modifiers.values()[0]
+        modifier = bpy.context.object.modifiers[-1]
         modifier.operation = "INTERSECT"
         modifier.object = other
         bpy.ops.object.modifier_apply(modifier=modifier.name)
