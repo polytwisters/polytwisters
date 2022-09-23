@@ -25,9 +25,9 @@ def rotate_about_axis(axis, angle):
             orient_axis=axis,
         )
 
-def create_cycloplane(theta, z):
-    """Create a cycloplane cross section. This corresponds to the "cylli" macro
-    in Bowers' original code."""
+def create_cycloplane(z, theta, phi):
+    """Create a cycloplane cross section. See "cylli" macro in Bowers' original
+    code."""
     if abs(theta - math.pi / 2) < EPSILON:
         _create_90_degree_cycloplane(z)
         return
@@ -52,10 +52,12 @@ def create_cycloplane(theta, z):
     translate_x = z * math.tan(theta)
     bpy.ops.transform.translate(value=(translate_x, 0, 0))
 
+    rotate_about_axis("Y", phi)
+
 
 def _create_90_degree_cycloplane(z):
     """Create the cross section of a cycloplane that has been rotated 90 degrees
-    in the xz-axis, with cross section coordinate z."""
+    in the xz-plane, with cross section coordinate z."""
     deselect_all()
     bpy.ops.mesh.primitive_cylinder_add(
         radius=LARGE,
@@ -64,6 +66,8 @@ def _create_90_degree_cycloplane(z):
         location=(0, 0, 0),
         scale=(1, 1, 1),
     )
+
+    # See comment in create_cycloplane.
     rotate_about_axis("X", math.pi / 2)
 
 
@@ -99,8 +103,7 @@ def create_dyster(n, z):
     order n at coordinate z."""
     cycloplanes = []
     for i in range(n):
-        create_cycloplane(math.pi / 4, z) 
-        rotate_about_axis("Y", i * 2 * math.pi / n)
+        create_cycloplane(z, math.pi / 4, i * 2 * math.pi / n)
         cycloplanes.append(bpy.context.object)
     intersect(cycloplanes)
 
@@ -108,7 +111,7 @@ def create_dyster(n, z):
 def create_tetratwister(z):
     """Compute the cross section of a tetratwister at coordinate z."""
     cycloplanes = []
-    create_cycloplane(math.pi / 2, z)
+    create_cycloplane(z, math.pi / 2, 0)
     cycloplanes.append(bpy.context.object)
     for i in range(3):
         # Let C be the center of a regular tetrahedron and A, B two vertices.
@@ -116,8 +119,11 @@ def create_tetratwister(z):
         # On https://en.wikipedia.org/wiki/Tetrahedron#Regular_tetrahedron
         # this is the "Vertex-Center-Vertex angle."
         # Not sure why Bowers divides it by 2 subtracts it from pi/2.
-        create_cycloplane(math.pi / 2 - math.acos(-1 / 3) / 2, z)
-        rotate_about_axis("Y", i * 2 * math.pi / 3)
+        create_cycloplane(
+            z,
+            math.pi / 2 - math.acos(-1 / 3) / 2,
+            i * 2 * math.pi / 3
+        )
         cycloplanes.append(bpy.context.object)
     intersect(cycloplanes)
 
@@ -126,11 +132,10 @@ def create_cubetwister(z):
     """Compute the cross section of a cubetwister at coordinate z."""
     cycloplanes = []
     for theta in [0, math.pi / 2]:
-        create_cycloplane(theta, z)
+        create_cycloplane(z, theta, 0)
         cycloplanes.append(bpy.context.object)
     for i in range(4):
-        create_cycloplane(math.pi / 4, z)
-        rotate_about_axis("Y", i * math.pi / 2)
+        create_cycloplane(z, math.pi / 4, i * math.pi / 2)
         cycloplanes.append(bpy.context.object)
     intersect(cycloplanes)
 
@@ -141,8 +146,7 @@ def create_octatwister(z):
     ano = math.radians(27.3678052)
     for theta in [ano, math.pi / 2 - ano]:
         for i in range(4):
-            create_cycloplane(theta, z)
-            rotate_about_axis("Y", i * math.pi / 2)
+            create_cycloplane(z, theta, i * math.pi / 2)
             cycloplanes.append(bpy.context.object)
     intersect(cycloplanes)
 
@@ -151,13 +155,12 @@ def create_dodecatwister(z):
     """Compute the cross section of a dodecatwister at coordinate z."""
     cycloplanes = []
     for theta in [0, math.pi / 2]:
-        create_cycloplane(theta, z)
+        create_cycloplane(z, theta, 0)
         cycloplanes.append(bpy.context.object)
     an = math.radians(31.7147441)
     for i, theta in enumerate([an, math.pi / 2 - an]):
         for j in range(5):
-            create_cycloplane(theta, z)
-            rotate_about_axis("Y", (j + i / 2) * 2 * math.pi / 5)
+            create_cycloplane(z, theta, (j + i / 2) * 2 * math.pi / 5)
             cycloplanes.append(bpy.context.object)
     intersect(cycloplanes)
 
@@ -171,8 +174,7 @@ def create_icosatwister(z):
     for i, theta in enumerate(angles):
         offset = 1 if i >= 2 else 0
         for j in range(5):
-            create_cycloplane(theta, z)
-            rotate_about_axis("Y", (j + offset / 2) * 2 * math.pi / 5)
+            create_cycloplane(z, theta, (j + offset / 2) * 2 * math.pi / 5)
             cycloplanes.append(bpy.context.object)
     intersect(cycloplanes)
 
