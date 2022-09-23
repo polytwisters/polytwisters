@@ -132,17 +132,14 @@ def get_tetrahedron():
         # This is the angle ACB: math.acos(-1 / 3) = 54.736 degrees
         # On https://en.wikipedia.org/wiki/Tetrahedron#Regular_tetrahedron
         # this is the "Vertex-Center-Vertex angle."
-        result.append((
-            math.pi - math.acos(-1 / 3),
-            i * 2 * math.pi / 3
-        ))
+        result.append((math.pi - math.acos(-1 / 3), i * 2 * math.pi / 3))
     return result
 
 
 def get_cube():
     result = []
-    for latitude in [0, math.pi]:
-        result.append((latitude, 0))
+    result.append((0, 0))
+    result.append((math.pi, 0))
     for i in range(4):
         result.append((math.pi / 2, i * math.pi / 2))
     return result
@@ -151,17 +148,17 @@ def get_cube():
 def get_octahedron():
     result = []
     # Ported from Bowers' code. Origin of constant unclear, sorry.
-    ano = 2 * math.radians(27.3678052)
-    for latitude in [ano, math.pi - ano]:
-        for i in range(4):
-            result.append((latitude, i * math.pi / 2))
+    latitude = 2 * math.radians(27.3678052)
+    for i in range(4):
+        result.append((latitude, i * math.pi / 2))
+        result.append((math.pi - latitude, i * math.pi / 2))
     return result
 
 
 def get_dodecahedron():
     result = []
-    for latitude in [0, math.pi]:
-        result.append((latitude, 0))
+    result.append((0, 0))
+    result.append((math.pi, 0))
     # Ported from Bowers' code. Origin of constant unclear, sorry.
     an = 2 * math.radians(31.7147441)
     for j in range(5):
