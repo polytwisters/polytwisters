@@ -160,9 +160,9 @@ def get_dodecahedron():
         result.append((latitude, 0))
     # Ported from Bowers' code. Origin of constant unclear, sorry.
     an = 2 * math.radians(31.7147441)
-    for i, latitude in enumerate([an, math.pi - an]):
-        for j in range(5):
-            result.append((latitude, (j + i / 2) * 2 * math.pi / 5))
+    for j in range(5):
+        result.append((an, j * 2 * math.pi / 5))
+        result.append((math.pi - an, (j + 1 / 2) * 2 * math.pi / 5))
     return result
 
 
@@ -171,11 +171,13 @@ def get_icosahedron():
     # Ported from Bowers' code. Origin of constants unclear, sorry.
     am2 = 2 * math.radians(18.68868407041)
     am3 = 2 * math.radians(39.593841518)
-    angles = [am2, am3, math.pi - am3, math.pi - am2]
-    for i, latitude in enumerate(angles):
-        offset = 1 if i >= 2 else 0
-        for j in range(5):
-            result.append((latitude, (j + offset / 2) * 2 * math.pi / 5))
+    for j in range(5):
+        longitude_1 = j * 2 * math.pi / 5
+        longitude_2 = (j + 1 / 2) * 2 * math.pi / 5
+        result.append((am2, longitude_1))
+        result.append((am3, longitude_1))
+        result.append((math.pi - am3, longitude_2))
+        result.append((math.pi - am2, longitude_2))
     return result
 
 
