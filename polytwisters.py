@@ -26,8 +26,11 @@ def rotate_about_axis(axis, angle):
         )
 
 def create_cycloplane(z, theta, phi):
-    """Create a cycloplane cross section. See "cylli" macro in Bowers' original
-    code."""
+    """Create a cycloplane cross section. z is the cross section coordinate,
+    theta is the rotation in the xz-plane, and phi is the rotation in the
+    xw-plane.
+
+    See "cylli" macro in Bowers' original code."""
     if abs(theta - math.pi / 2) < EPSILON:
         _create_90_degree_cycloplane(z)
         return
