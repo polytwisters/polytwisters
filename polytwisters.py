@@ -99,6 +99,23 @@ def create_dyster(n, z):
     intersect(cycloplanes)
 
 
+def create_tetratwister(z):
+    """Compute the cross section of a tetratwister at coordinate z."""
+    cycloplanes = []
+    create_cycloplane(math.pi / 2, z)
+    cycloplanes.append(bpy.context.object)
+    for i in range(3):
+        # Let C be the center of a regular tetrahedron and A, B two vertices.
+        # This is the angle ACB: math.acos(-1 / 3) = 54.736 degrees
+        # On https://en.wikipedia.org/wiki/Tetrahedron#Regular_tetrahedron
+        # this is the "Vertex-Center-Vertex angle."
+        # Not sure why Bowers divides it by 2 subtracts it from pi/2.
+        create_cycloplane(math.pi / 2 - math.acos(-1 / 3) / 2, z)
+        rotate_about_axis("Y", i * 2 * math.pi / 3)
+        cycloplanes.append(bpy.context.object)
+    intersect(cycloplanes)
+
+
 def create_cubetwister(z):
     """Compute the cross section of a cubetwister at coordinate z."""
     cycloplanes = []
@@ -116,4 +133,4 @@ if __name__ == "__main__":
     # Delete the default cube.
     bpy.ops.object.delete(use_global=False)
 
-    create_cubetwister(0.5)
+    create_tetratwister(0.5)
