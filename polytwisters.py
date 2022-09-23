@@ -63,10 +63,14 @@ def create_cycloplane(z, latitude, longitude):
 
     scale_x = 1 / math.cos(theta)
     bpy.ops.transform.resize(value=(scale_x, 1, 1))
-    rotate_about_axis("X", -theta)
     translate_x = z * math.tan(theta)
     bpy.ops.transform.translate(value=(translate_x, 0, 0))
 
+    # In Bowers' code this rotation about the X-axis comes before the
+    # translation. It doesn't matter because translation along the X-axis
+    # commutes with rotations about the X-axis, but I prefer to group the
+    # rotations together.
+    rotate_about_axis("X", -theta)
     rotate_about_axis("Y", phi)
 
 
