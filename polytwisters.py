@@ -27,8 +27,9 @@ def rotate_about_axis(axis, angle):
 def create_cycloplane(theta, z):
     """Create a cycloplane cross section. This corresponds to the "cylli" macro
     in Bowers' original code."""
-    # if abs(theta - math.pi / 2) < EPSILON:
-
+    if abs(theta - math.pi / 2) < EPSILON:
+        _create_90_degree_cycloplane(z)
+        return
 
     deselect_all()
     bpy.ops.mesh.primitive_cylinder_add(
@@ -49,6 +50,21 @@ def create_cycloplane(theta, z):
     rotate_about_axis("X", -theta)
     translate_x = z * math.tan(theta)
     bpy.ops.transform.translate(value=(translate_x, 0, 0))
+
+
+def _create_90_degree_cycloplane(z):
+    """Create the cross section of a cycloplane that has been rotated 90 degrees
+    in the xz-axis, with cross section coordinate z."""
+    deselect_all()
+    bpy.ops.mesh.primitive_cylinder_add(
+        radius=LARGE,
+        depth=2 * math.sqrt(1 - z * z),
+        vertices=32,
+        location=(0, 0, 0),
+        scale=(1, 1, 1),
+    )
+    rotate_about_axis("X", math.pi / 2)
+
 
 def intersect(objects):
     """Given a list of Blender objects, compute the intersection of all of
@@ -72,18 +88,32 @@ def intersect(objects):
         bpy.ops.object.delete()
 
 
+def create_dyster(n, z):
+    """Compute the cross section of a convex dyster (hosohedral polytwister) of
+    order n at coordinate z."""
+    cycloplanes = []
+    for i in range(n):
+        create_cycloplane(math.pi / 4, z) 
+        rotate_about_axis("Y", i * 2 * math.pi / n)
+        cycloplanes.append(bpy.context.object)
+    intersect(cycloplanes)
+
+
+def create_cubetwister(z):
+    """Compute the cross section of a cubetwister at coordinate z."""
+    cycloplanes = []
+    for theta in [0, math.pi / 2]:
+        create_cycloplane(theta, z)
+        cycloplanes.append(bpy.context.object)
+    for i in range(4):
+        create_cycloplane(math.pi / 4, z)
+        rotate_about_axis("Y", i * math.pi / 2)
+        cycloplanes.append(bpy.context.object)
+    intersect(cycloplanes)
+
+
 if __name__ == "__main__":
     # Delete the default cube.
     bpy.ops.object.delete(use_global=False)
 
-    z = 0.1
-    theta = math.pi / 4
-    n = 5
-
-    cycloplanes = []
-    for i in range(n):
-        create_cycloplane(theta, z) 
-        rotate_about_axis("Y", i * 2 * math.pi / n)
-        cycloplanes.append(bpy.context.object)
-
-    intersect(cycloplanes)
+    create_cubetwister(0.5)
