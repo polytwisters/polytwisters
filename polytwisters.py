@@ -146,6 +146,7 @@ def create_cubetwister(z):
 def create_octatwister(z):
     """Compute the cross section of an octatwister at coordinate z."""
     cycloplanes = []
+    # Ported from Bowers' code. Origin of constant unclear, sorry.
     ano = math.radians(27.3678052)
     for theta in [ano, math.pi / 2 - ano]:
         for i in range(4):
@@ -160,6 +161,7 @@ def create_dodecatwister(z):
     for theta in [0, math.pi / 2]:
         create_cycloplane(z, theta, 0)
         cycloplanes.append(bpy.context.object)
+    # Ported from Bowers' code. Origin of constant unclear, sorry.
     an = math.radians(31.7147441)
     for i, theta in enumerate([an, math.pi / 2 - an]):
         for j in range(5):
@@ -171,6 +173,7 @@ def create_dodecatwister(z):
 def create_icosatwister(z):
     """Compute the cross section of an icosatwister at coordinate z."""
     cycloplanes = []
+    # Ported from Bowers' code. Origin of constants unclear, sorry.
     am2 = math.radians(18.68868407041)
     am3 = math.radians(39.593841518)
     angles = [am2, am3, math.pi / 2 - am3, math.pi / 2 - am2]
