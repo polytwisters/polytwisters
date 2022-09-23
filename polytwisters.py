@@ -1,13 +1,14 @@
 import math
 import time
 import bpy
-import mathutils
 
 EPSILON = 1e-10
 LARGE = 10e3
 
+
 def deselect_all():
     bpy.ops.object.select_all(action="DESELECT")
+
 
 def rotate_about_axis(axis, angle):
     # See https://stackoverflow.com/a/67697363.
@@ -25,14 +26,25 @@ def rotate_about_axis(axis, angle):
             orient_axis=axis,
         )
 
-def create_cycloplane(z, theta, phi):
-    """Create a cycloplane cross section. z is the cross section coordinate,
-    theta is the rotation in the xz-plane, and phi is the rotation in the
-    xw-plane.
+
+def create_cycloplane(z, latitude, longitude):
+    """Create a cross section of a cycloplane constructed from a Hopf fiber.
+    z is the cross section coordinate, latitude and longitude are the
+    coordinates of the point on the sphere. Said point is transformed via the
+    preimage of the Hopf fibration into a unit circle, then the cycloplane is
+    constructed from that unit circle.
+
+    Note that latitude is defined differently from normal -- it is the angle
+    from the north pole, not the angle from the equator.
 
     See "cylli" macro in Bowers' original code."""
+
+    # Reason for division by 2 currently unclear, sorry.
+    theta = latitude / 2
+    phi = longitude
+
     if abs(theta - math.pi / 2) < EPSILON:
-        _create_90_degree_cycloplane(z)
+        _create_south_pole_cycloplane(z)
         return
 
     deselect_all()
@@ -58,9 +70,9 @@ def create_cycloplane(z, theta, phi):
     rotate_about_axis("Y", phi)
 
 
-def _create_90_degree_cycloplane(z):
-    """Create the cross section of a cycloplane that has been rotated 90 degrees
-    in the xz-plane, with cross section coordinate z."""
+def _create_south_pole_cycloplane(z):
+    """Create the cross section of a cycloplane whose point is located at the
+    south pole."""
     deselect_all()
     bpy.ops.mesh.primitive_cylinder_add(
         radius=LARGE,
@@ -101,88 +113,70 @@ def intersect(objects):
     first.select_set(True)
 
 
-def create_dyster(n, z):
-    """Compute the cross section of a convex dyster (hosohedral polytwister) of
-    order n at coordinate z."""
-    cycloplanes = []
+def get_hosohedron(n):
+    result = []
     for i in range(n):
-        create_cycloplane(z, math.pi / 4, i * 2 * math.pi / n)
-        cycloplanes.append(bpy.context.object)
-    intersect(cycloplanes)
+        result.append((math.pi / 2, i * 2 * math.pi / n))
+    return result
 
 
-def create_tetratwister(z):
-    """Compute the cross section of a tetratwister at coordinate z."""
-    cycloplanes = []
-    create_cycloplane(z, math.pi / 2, 0)
-    cycloplanes.append(bpy.context.object)
+def get_tetrahedron():
+    result = []
+    result.append((math.pi, 0))
     for i in range(3):
         # Let C be the center of a regular tetrahedron and A, B two vertices.
         # This is the angle ACB: math.acos(-1 / 3) = 54.736 degrees
         # On https://en.wikipedia.org/wiki/Tetrahedron#Regular_tetrahedron
         # this is the "Vertex-Center-Vertex angle."
-        # Not sure why Bowers divides it by 2 subtracts it from pi/2.
-        create_cycloplane(
-            z,
-            math.pi / 2 - math.acos(-1 / 3) / 2,
+        result.append((
+            math.pi - math.acos(-1 / 3),
             i * 2 * math.pi / 3
-        )
-        cycloplanes.append(bpy.context.object)
-    intersect(cycloplanes)
+        ))
+    return result
 
 
-def create_cubetwister(z):
-    """Compute the cross section of a cubetwister at coordinate z."""
-    cycloplanes = []
-    for theta in [0, math.pi / 2]:
-        create_cycloplane(z, theta, 0)
-        cycloplanes.append(bpy.context.object)
+def get_cube():
+    result = []
+    for latitude in [0, math.pi]:
+        result.append((latitude, 0))
     for i in range(4):
-        create_cycloplane(z, math.pi / 4, i * math.pi / 2)
-        cycloplanes.append(bpy.context.object)
-    intersect(cycloplanes)
+        result.append((math.pi / 2, i * math.pi / 2))
+    return result
 
 
-def create_octatwister(z):
-    """Compute the cross section of an octatwister at coordinate z."""
-    cycloplanes = []
+def get_octahedron():
+    result = []
     # Ported from Bowers' code. Origin of constant unclear, sorry.
-    ano = math.radians(27.3678052)
-    for theta in [ano, math.pi / 2 - ano]:
+    ano = 2 * math.radians(27.3678052)
+    for latitude in [ano, math.pi - ano]:
         for i in range(4):
-            create_cycloplane(z, theta, i * math.pi / 2)
-            cycloplanes.append(bpy.context.object)
-    intersect(cycloplanes)
+            result.append((latitude, i * math.pi / 2))
+    return result
 
 
-def create_dodecatwister(z):
-    """Compute the cross section of a dodecatwister at coordinate z."""
-    cycloplanes = []
-    for theta in [0, math.pi / 2]:
-        create_cycloplane(z, theta, 0)
-        cycloplanes.append(bpy.context.object)
+def get_dodecahedron():
+    result = []
+    for latitude in [0, math.pi]:
+        result.append((latitude, 0))
     # Ported from Bowers' code. Origin of constant unclear, sorry.
-    an = math.radians(31.7147441)
-    for i, theta in enumerate([an, math.pi / 2 - an]):
+    an = 2 * math.radians(31.7147441)
+    for i, latitude in enumerate([an, math.pi - an]):
         for j in range(5):
-            create_cycloplane(z, theta, (j + i / 2) * 2 * math.pi / 5)
-            cycloplanes.append(bpy.context.object)
-    intersect(cycloplanes)
+            result.append((latitude, (j + i / 2) * 2 * math.pi / 5))
+    return result
 
 
-def create_icosatwister(z):
-    """Compute the cross section of an icosatwister at coordinate z."""
-    cycloplanes = []
+def get_icosahedron():
+    result = []
     # Ported from Bowers' code. Origin of constants unclear, sorry.
-    am2 = math.radians(18.68868407041)
-    am3 = math.radians(39.593841518)
-    angles = [am2, am3, math.pi / 2 - am3, math.pi / 2 - am2]
-    for i, theta in enumerate(angles):
+    am2 = 2 * math.radians(18.68868407041)
+    am3 = 2 * math.radians(39.593841518)
+    angles = [am2, am3, math.pi - am3, math.pi - am2]
+    for i, latitude in enumerate(angles):
         offset = 1 if i >= 2 else 0
         for j in range(5):
-            create_cycloplane(z, theta, (j + offset / 2) * 2 * math.pi / 5)
-            cycloplanes.append(bpy.context.object)
-    intersect(cycloplanes)
+            result.append((latitude, (j + offset / 2) * 2 * math.pi / 5))
+    return result
 
 
 if __name__ == "__main__":
@@ -191,15 +185,19 @@ if __name__ == "__main__":
 
     z = 0.5
 
-    functions = [
-        create_tetratwister,
-        create_cubetwister,
-        create_octatwister,
-        create_dodecatwister,
-        create_icosatwister,
+    polyhedra = [
+        get_tetrahedron(),
+        get_cube(),
+        get_octahedron(),
+        get_dodecahedron(),
+        get_icosahedron(),
     ]
 
-    for i, function in enumerate(functions):
-        function(z)
+    for i, polyhedron in enumerate(polyhedra):
+        cycloplanes = []
+        for latitude, longitude in polyhedron:
+            create_cycloplane(z, latitude, longitude)
+            cycloplanes.append(bpy.context.object)
+        intersect(cycloplanes)
         rotate_about_axis("X", math.pi / 2)
         bpy.ops.transform.translate(value=(i * 2, 0, 1))
