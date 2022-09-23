@@ -1,4 +1,5 @@
 import math
+import time
 import bpy
 import mathutils
 
@@ -35,7 +36,7 @@ def create_cycloplane(theta, z):
     bpy.ops.mesh.primitive_cylinder_add(
         radius=1,
         depth=LARGE,
-        vertices=32,
+        vertices=64,
         location=(0, 0, 0),
         scale=(1, 1, 1),
     )
@@ -73,7 +74,10 @@ def intersect(objects):
 
     It is assumed that there are no other modifiers on the first object."""
     first = objects[0]
-    for other in objects[1:]:
+    for i, other in enumerate(objects[1:]):
+        index = i + 1
+        print(f"Computing intersection {index}/{len(objects) - 1}...")
+
         deselect_all()
         first.select_set(True)
         bpy.context.view_layer.objects.active = first
@@ -86,6 +90,8 @@ def intersect(objects):
         deselect_all()
         other.select_set(True)
         bpy.ops.object.delete()
+
+    first.select_set(True)
 
 
 def create_dyster(n, z):
@@ -129,8 +135,63 @@ def create_cubetwister(z):
     intersect(cycloplanes)
 
 
+def create_octatwister(z):
+    """Compute the cross section of an octatwister at coordinate z."""
+    cycloplanes = []
+    ano = math.radians(27.3678052)
+    for theta in [ano, math.pi / 2 - ano]:
+        for i in range(4):
+            create_cycloplane(theta, z)
+            rotate_about_axis("Y", i * math.pi / 2)
+            cycloplanes.append(bpy.context.object)
+    intersect(cycloplanes)
+
+
+def create_dodecatwister(z):
+    """Compute the cross section of a dodecatwister at coordinate z."""
+    cycloplanes = []
+    for theta in [0, math.pi / 2]:
+        create_cycloplane(theta, z)
+        cycloplanes.append(bpy.context.object)
+    an = math.radians(31.7147441)
+    for i, theta in enumerate([an, math.pi / 2 - an]):
+        for j in range(5):
+            create_cycloplane(theta, z)
+            rotate_about_axis("Y", (j + i / 2) * 2 * math.pi / 5)
+            cycloplanes.append(bpy.context.object)
+    intersect(cycloplanes)
+
+
+def create_icosatwister(z):
+    """Compute the cross section of an icosatwister at coordinate z."""
+    cycloplanes = []
+    am2 = math.radians(18.68868407041)
+    am3 = math.radians(39.593841518)
+    angles = [am2, am3, math.pi / 2 - am3, math.pi / 2 - am2]
+    for i, theta in enumerate(angles):
+        offset = 1 if i >= 2 else 0
+        for j in range(5):
+            create_cycloplane(theta, z)
+            rotate_about_axis("Y", (j + offset / 2) * 2 * math.pi / 5)
+            cycloplanes.append(bpy.context.object)
+    intersect(cycloplanes)
+
+
 if __name__ == "__main__":
     # Delete the default cube.
     bpy.ops.object.delete(use_global=False)
 
-    create_tetratwister(0.5)
+    z = 0.5
+
+    functions = [
+        create_tetratwister,
+        create_cubetwister,
+        create_octatwister,
+        create_dodecatwister,
+        create_icosatwister,
+    ]
+
+    for i, function in enumerate(functions):
+        function(z)
+        rotate_about_axis("X", math.pi / 2)
+        bpy.ops.transform.translate(value=(i * 2, 0, 1))
