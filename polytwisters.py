@@ -182,12 +182,15 @@ def get_icosahedron():
     return result
 
 
-if __name__ == "__main__":
-    # Delete the default cube.
-    bpy.ops.object.delete(use_global=False)
+def create_convex_polytwister(polyhedron, z):
+    cycloplanes = []
+    for latitude, longitude in polyhedron:
+        create_cycloplane(z, latitude, longitude)
+        cycloplanes.append(bpy.context.object)
+    intersect(cycloplanes)
 
-    z = 0.5
 
+def create_platonic_solid_polytwisters(z, spacing=2.5, translate_z=1):
     polyhedra = [
         get_tetrahedron(),
         get_cube(),
@@ -195,12 +198,14 @@ if __name__ == "__main__":
         get_dodecahedron(),
         get_icosahedron(),
     ]
-
     for i, polyhedron in enumerate(polyhedra):
-        cycloplanes = []
-        for latitude, longitude in polyhedron:
-            create_cycloplane(z, latitude, longitude)
-            cycloplanes.append(bpy.context.object)
-        intersect(cycloplanes)
+        create_convex_polytwister(polyhedron, z)
         rotate_about_axis("X", math.pi / 2)
-        bpy.ops.transform.translate(value=(i * 2, 0, 1))
+        bpy.ops.transform.translate(value=(i * spacing, 0, translate_z))
+
+
+if __name__ == "__main__":
+    # Delete the default cube.
+    bpy.ops.object.delete(use_global=False)
+
+    create_platonic_solid_polytwisters(0.5)
