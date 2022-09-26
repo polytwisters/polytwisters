@@ -90,7 +90,7 @@ def _create_south_pole_cycloplane(z):
     rotate_about_axis("X", math.pi / 2)
 
 
-def intersect(objects):
+def intersect(objects, delete=True):
     """Given a list of Blender objects, compute the intersection of all of
     them by creating and applying Boolean modifiers on the first object, then
     deleting the rest of the objects.
@@ -110,11 +110,36 @@ def intersect(objects):
         modifier.object = other
         bpy.ops.object.modifier_apply(modifier=modifier.name)
 
-        deselect_all()
-        other.select_set(True)
-        bpy.ops.object.delete()
+        if delete:
+            deselect_all()
+            other.select_set(True)
+            bpy.ops.object.delete()
 
     first.select_set(True)
+    return bpy.context.object
+
+
+def difference(object_1, object_2):
+    """Given a list of Blender objects, compute the intersection of all of
+    them by creating and applying Boolean modifiers on the first object, then
+    deleting the rest of the objects.
+
+    It is assumed that there are no other modifiers on the first object."""
+    deselect_all()
+    object_1.select_set(True)
+    bpy.context.view_layer.objects.active = object_1
+    bpy.ops.object.modifier_add(type="BOOLEAN")
+    modifier = bpy.context.object.modifiers[-1]
+    modifier.operation = "DIFFERENCE"
+    modifier.object = object_2
+    bpy.ops.object.modifier_apply(modifier=modifier.name)
+
+    deselect_all()
+    object_2.select_set(True)
+    bpy.ops.object.delete()
+
+    object_1.select_set(True)
+    return bpy.context.object
 
 
 def get_hosohedron(n):
@@ -129,7 +154,7 @@ def get_tetrahedron():
     result.append((math.pi, 0))
     for i in range(3):
         # Let C be the center of a regular tetrahedron and A, B two vertices.
-        # This is the angle ACB: math.acos(-1 / 3) = 54.736 degrees
+        # This is the angle ACB: math.acos(-1 / 3) = 109 degrees
         # On https://en.wikipedia.org/wiki/Tetrahedron#Regular_tetrahedron
         # this is the "Vertex-Center-Vertex angle."
         result.append((math.pi - math.acos(-1 / 3), i * 2 * math.pi / 3))
@@ -185,9 +210,9 @@ def get_icosahedron():
 def create_convex_polytwister(polyhedron, z):
     cycloplanes = []
     for latitude, longitude in polyhedron:
-        create_cycloplane(z, latitude, longitude)
-        cycloplanes.append(bpy.context.object)
-    intersect(cycloplanes)
+        cycloplane = create_cycloplane(z, latitude, longitude)
+        cycloplanes.append(cycloplane)
+    return intersect(cycloplanes)
 
 
 def create_platonic_solid_polytwisters(z, spacing=2.5, translate_z=1):
@@ -204,8 +229,43 @@ def create_platonic_solid_polytwisters(z, spacing=2.5, translate_z=1):
         bpy.ops.transform.translate(value=(i * spacing, 0, translate_z))
 
 
+def create_quasitetratwister(z):
+    # TODO reduce code duplication with get_tetrahedron()
+
+    def create_south_pole_cycloplane():
+        create_cycloplane(z, math.pi, 0)
+        return bpy.context.object
+
+    def create_other_cycloplanes():
+        result = []
+        for i in range(3):
+            latitude = math.pi - math.acos(-1 / 3)
+            longitude = i * 2 * math.pi / 3
+            create_cycloplane(z, latitude, longitude)
+            cycloplane = bpy.context.object
+            result.append(cycloplane)
+        return result
+
+    ring_1 = difference(
+        intersect(create_other_cycloplanes()),
+        create_south_pole_cycloplane()
+    )
+    
+    other = create_other_cycloplanes() 
+    ring_2 = difference(
+        intersect([create_south_pole_cycloplane(), other[0], other[1]]),
+        other[2]
+    )
+
+    for i in range(2):
+        bpy.ops.object.duplicate()
+        rotate_about_axis("Y", 2 * math.pi / 3)
+
+    return ring_1
+
+
 if __name__ == "__main__":
     # Delete the default cube.
     bpy.ops.object.delete(use_global=False)
 
-    create_platonic_solid_polytwisters(0.5)
+    create_quasitetratwister(0.1)
