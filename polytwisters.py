@@ -4,6 +4,23 @@ import bpy
 
 EPSILON = 1e-10
 LARGE = 10e3
+PHI = (1 + math.sqrt(5)) / 2
+
+
+def get_3d_squared_distance(point_1, point_2):
+    """Get the distance between two points in 3D represented as tuples."""
+    x_1, y_1, z_1 = point_1
+    x_2, y_2, z_2 = point_2
+    return (x_1 - x_2) ** 2 + (y_1 - y_2) ** 2 + (z_1 - z_2) ** 2
+
+
+def get_3d_angle(a, b, c):
+    """Given 3D points A, B, and C, get the angle ABC in radians."""
+    a_2 = get_3d_squared_distance(b, c)
+    b_2 = get_3d_squared_distance(a, c)
+    c_2 = get_3d_squared_distance(a, b)
+    # Law of cosines: b^2 = a^2 + c^2 - 2 a c cos(theta)
+    return math.acos((a_2 + c_2 - b_2) / (2 * math.sqrt(a_2 * c_2)))
 
 
 def deselect_all():
@@ -44,8 +61,7 @@ def create_cycloplane(z, latitude, longitude):
     phi = longitude
 
     if abs(theta - math.pi / 2) < EPSILON:
-        _create_south_pole_cycloplane(z)
-        return
+        return _create_south_pole_cycloplane(z)
 
     deselect_all()
     bpy.ops.mesh.primitive_cylinder_add(
@@ -73,6 +89,8 @@ def create_cycloplane(z, latitude, longitude):
     rotate_about_axis("X", -theta)
     rotate_about_axis("Y", phi)
 
+    return bpy.context.object
+
 
 def _create_south_pole_cycloplane(z):
     """Create the cross section of a cycloplane whose point is located at the
@@ -88,6 +106,8 @@ def _create_south_pole_cycloplane(z):
 
     # See comment in create_cycloplane.
     rotate_about_axis("X", math.pi / 2)
+    
+    return bpy.context.object
 
 
 def intersect(objects, delete=True):
@@ -152,12 +172,15 @@ def get_hosohedron(n):
 def get_tetrahedron():
     result = []
     result.append((math.pi, 0))
+
+    # Let A and B be two vertices of a regular tetrahedron centered at C.
+    # This is the angle ACB.
+    # On https://en.wikipedia.org/wiki/Tetrahedron#Regular_tetrahedron
+    # this is the "Vertex-Center-Vertex angle."
+    latitude = get_3d_angle((1, 1, 1), (0, 0, 0), (1, -1, -1))
+
     for i in range(3):
-        # Let C be the center of a regular tetrahedron and A, B two vertices.
-        # This is the angle ACB: math.acos(-1 / 3) = 109 degrees
-        # On https://en.wikipedia.org/wiki/Tetrahedron#Regular_tetrahedron
-        # this is the "Vertex-Center-Vertex angle."
-        result.append((math.pi - math.acos(-1 / 3), i * 2 * math.pi / 3))
+        result.append((math.pi - latitude, i * 2 * math.pi / 3))
     return result
 
 
@@ -172,8 +195,9 @@ def get_cube():
 
 def get_octahedron():
     result = []
-    # Ported from Bowers' code. Origin of constant unclear, sorry.
-    latitude = 2 * math.radians(27.3678052)
+    # Let A be a vertex of a regular octahedron centered at C and let B be
+    # the center of an adjacent face. This is the angle ACB.
+    latitude = get_3d_angle((1, 0, 0), (0, 0, 0), (1, 1, 1))
     for i in range(4):
         result.append((latitude, i * math.pi / 2))
         result.append((math.pi - latitude, i * math.pi / 2))
@@ -184,26 +208,33 @@ def get_dodecahedron():
     result = []
     result.append((0, 0))
     result.append((math.pi, 0))
-    # Ported from Bowers' code. Origin of constant unclear, sorry.
-    an = 2 * math.radians(31.7147441)
+    # Let A and B be the centers of two adjacent faces of a regular
+    # dodecahedron centered at C. This is the angle ACB.
+    # Equivalently, A and B are two adjacent vertices of a regular
+    # icosahedron centered at C. We are using the standard definition of
+    # icosahedron coordinates.
+    latitude = get_3d_angle((0, 1, PHI), (0, 0, 0), (0, -1, PHI))
     for j in range(5):
-        result.append((an, j * 2 * math.pi / 5))
-        result.append((math.pi - an, (j + 1 / 2) * 2 * math.pi / 5))
+        result.append((latitude, j * 2 * math.pi / 5))
+        result.append((math.pi - latitude, (j + 1 / 2) * 2 * math.pi / 5))
     return result
 
 
 def get_icosahedron():
     result = []
-    # Ported from Bowers' code. Origin of constants unclear, sorry.
-    am2 = 2 * math.radians(18.68868407041)
-    am3 = 2 * math.radians(39.593841518)
+    # Let A be the center of a face of a regular dodecahedron centered at C,
+    # and let B be one of the three closest vertices. This is the angle ACB.
+    latitude_1 = get_3d_angle((1, 1, 1), (0, 0, 0), (0, 1, PHI))
+    # Same as above, but B is now one of the three second closest vertices
+    # to A.
+    latitude_2 = get_3d_angle((1, 1, 1), (0, 0, 0), (0, -1, PHI))
     for j in range(5):
         longitude_1 = j * 2 * math.pi / 5
         longitude_2 = (j + 1 / 2) * 2 * math.pi / 5
-        result.append((am2, longitude_1))
-        result.append((am3, longitude_1))
-        result.append((math.pi - am3, longitude_2))
-        result.append((math.pi - am2, longitude_2))
+        result.append((latitude_1, longitude_1))
+        result.append((latitude_2, longitude_1))
+        result.append((math.pi - latitude_2, longitude_2))
+        result.append((math.pi - latitude_1, longitude_2))
     return result
 
 
@@ -268,4 +299,4 @@ if __name__ == "__main__":
     # Delete the default cube.
     bpy.ops.object.delete(use_global=False)
 
-    create_quasitetratwister(0.1)
+    create_platonic_solid_polytwisters(0.5)
