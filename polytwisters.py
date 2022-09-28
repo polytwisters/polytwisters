@@ -246,18 +246,27 @@ def create_convex_polytwister(polyhedron, z):
     return intersect(cycloplanes)
 
 
-def create_platonic_solid_polytwisters(z, spacing=2.5, translate_z=1):
-    polyhedra = [
+def create_convex_regular_polytwisters(z, spacing=2.5, translate_z=1):
+    platonic_solids = [
         get_tetrahedron(),
         get_cube(),
         get_octahedron(),
         get_dodecahedron(),
         get_icosahedron(),
     ]
-    for i, polyhedron in enumerate(polyhedra):
+    hosohedra = [get_hosohedron(3 + n) for n in range(len(platonic_solids))]
+
+    for i, polyhedron in enumerate(platonic_solids):
         create_convex_polytwister(polyhedron, z)
         rotate_about_axis("X", math.pi / 2)
         bpy.ops.transform.translate(value=(i * spacing, 0, translate_z))
+
+    for i, polyhedron in enumerate(hosohedra):
+        create_convex_polytwister(polyhedron, z)
+        rotate_about_axis("X", math.pi / 2)
+        bpy.ops.transform.translate(
+            value=(i * spacing, 0, translate_z + spacing)
+        )
 
 
 def create_quasitetratwister(z):
@@ -299,4 +308,4 @@ if __name__ == "__main__":
     # Delete the default cube.
     bpy.ops.object.delete(use_global=False)
 
-    create_platonic_solid_polytwisters(0.5)
+    create_convex_regular_polytwisters(0.5)
