@@ -44,6 +44,19 @@ def rotate_about_axis(axis, angle):
         )
 
 
+def group_under_empty(parts):
+    """Create an empty and group every object in parts as the child of
+    that empty."""
+    bpy.ops.object.empty_add(type="PLAIN_AXES")
+    parent = bpy.context.object
+    for part in parts:
+        part.select_set(True)
+    bpy.ops.object.parent_set(type="OBJECT")
+    deselect_all()
+    bpy.context.view_layer.objects.active = parent
+    return parent
+
+
 def create_cycloplane(z, latitude, longitude):
     """Create a cross section of a cycloplane constructed from a Hopf fiber.
     z is the cross section coordinate, latitude and longitude are the
@@ -286,26 +299,30 @@ def create_quasitetratwister(z):
             result.append(cycloplane)
         return result
 
+    parts = []
     ring_1 = difference(
         intersect(create_other_cycloplanes()),
         create_south_pole_cycloplane()
     )
+    parts.append(ring_1)
     
     other = create_other_cycloplanes() 
     ring_2 = difference(
         intersect([create_south_pole_cycloplane(), other[0], other[1]]),
         other[2]
     )
+    parts.append(ring_2)
 
     for i in range(2):
         bpy.ops.object.duplicate()
         rotate_about_axis("Y", 2 * math.pi / 3)
+        parts.append(bpy.context.object)
 
-    return ring_1
+    return group_under_empty(parts)
 
 
 if __name__ == "__main__":
     # Delete the default cube.
     bpy.ops.object.delete(use_global=False)
 
-    create_convex_regular_polytwisters(0.5)
+    create_quasitetratwister(0.5)
