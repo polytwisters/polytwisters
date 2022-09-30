@@ -1,8 +1,5 @@
 """
 A Blender script for creating polytwister cross sections.
-
-As of this writing, there is a lot of code duplication in this script.
-This will be addressed eventually.
 """
 
 import math
@@ -381,50 +378,97 @@ def create_bloated_tetratwister(z):
     return group_under_empty(parts)
 
 
+class Realizer:
+
+    def __init__(self, z):
+        self.z = z
+
+    def realize(self, node):
+        type_ = node["type"]
+        if type_ == "root":
+            parts = []
+            for child in node["parts"]:
+                part = self.realize(child)
+                if isinstance(part, list):
+                    parts.extend(part)
+                else:
+                    parts.append(part)
+            return group_under_empty(parts)
+        elif type_ == "cycloplane":
+            create_cycloplane(
+                self.z, node["latitude"], node["longitude"]
+            )
+            return bpy.context.object
+        elif type_ == "rotated_copies":
+            first = self.realize(node["operand"])
+            return [first] + make_rotated_copies(node["order"])
+        elif type_ == "intersection":
+            operands = []
+            for child in node["operands"]:
+                operand = self.realize(child)
+                operands.append(operand)
+            return intersect(operands)
+        elif type_ == "difference":
+            operands = []
+            for child in node["operands"]:
+                operand = self.realize(child)
+                operands.append(operand)
+            result = operands[0]
+            for other in operands[1:]:
+                result = difference(result, other)
+            return result
+        else:
+            raise ValueError(f'Invalid node type {type_}')
+
+
 def create_quasicubetwister(z):
-    # TODO reduce code duplication with get_cube()
+    north_pole = {"type": "cycloplane", "latitude": 0, "longitude": 0}
+    equators = [
+        {"type": "cycloplane", "latitude": math.pi / 2, "longitude": i * math.pi / 2}
+        for i in range(4)
+    ]
+    south_pole = {"type": "cycloplane", "latitude": math.pi, "longitude": 0}
 
-    def create_north_pole_cycloplane():
-        create_cycloplane(z, 0, 0)
-        return bpy.context.object
+    polytwister = {
+        "type": "root",
+        "parts": [
+            {
+                "type": "rotated_copies",
+                "order": 4,
+                "operand": {
+                    "type": "difference",
+                    "operands": [
+                        {
+                            "type": "intersection",
+                            "operands": [north_pole, equators[0], equators[1]]
+                        },
+                        south_pole,
+                        equators[2],
+                        equators[3]
+                    ],
+                },
+            },
+            {
+                "type": "rotated_copies",
+                "order": 4,
+                "operand": {
+                    "type": "difference",
+                    "operands": [
+                        {
+                            "type": "intersection",
+                            "operands": [south_pole, equators[0], equators[1]]
+                        },
+                        north_pole,
+                        equators[2],
+                        equators[3]
+                    ],
+                },
+            },
+        ],
+    }
 
-    def create_south_pole_cycloplane():
-        create_cycloplane(z, math.pi, 0)
-        return bpy.context.object
-
-    def create_equator_cycloplanes():
-        result = []
-        for i in range(4):
-            create_cycloplane(z, math.pi / 2, i * math.pi / 2)
-            cycloplane = bpy.context.object
-            result.append(cycloplane)
-        return result
-
-    parts = []
-
-    north_pole = create_north_pole_cycloplane()
-    south_pole = create_south_pole_cycloplane()
-    equator = create_equator_cycloplanes()
-
-    ring_1 = intersect([north_pole, equator[0], equator[1]])
-    for cycloplane in [south_pole, equator[2], equator[3]]:
-        ring_1 = difference(ring_1, cycloplane)
-    parts.append(ring_1)
-    new_parts = make_rotated_copies(4)
-    parts.extend(new_parts)
-
-    north_pole = create_north_pole_cycloplane()
-    south_pole = create_south_pole_cycloplane()
-    equator = create_equator_cycloplanes()
-
-    ring_2 = intersect([south_pole, equator[0], equator[1]])
-    for cycloplane in [north_pole, equator[2], equator[3]]:
-        ring_2 = difference(ring_2, cycloplane)
-    parts.append(ring_2)
-    new_parts = make_rotated_copies(4)
-    parts.extend(new_parts)
-
-    return group_under_empty(parts)
+    realizer = Realizer(z)
+    return realizer.realize(polytwister)
 
 
 def create_bloated_cubetwister(z):
