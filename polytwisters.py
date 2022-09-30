@@ -1,3 +1,10 @@
+"""
+A Blender script for creating polytwister cross sections.
+
+As of this writing, there is a lot of code duplication in this script.
+This will be addressed eventually.
+"""
+
 import math
 import time
 import bpy
@@ -54,6 +61,7 @@ def group_under_empty(parts):
     bpy.ops.object.parent_set(type="OBJECT")
     deselect_all()
     bpy.context.view_layer.objects.active = parent
+    parent.select_set(True)
     return parent
 
 
@@ -282,6 +290,15 @@ def create_convex_regular_polytwisters(z, spacing=2.5, translate_z=1):
         )
 
 
+def make_rotated_copies(n):
+    copies = []
+    for i in range(n - 1):
+        bpy.ops.object.duplicate()
+        rotate_about_axis("Y", 2 * math.pi / n)
+        copies.append(bpy.context.object)
+    return copies
+
+
 def create_quasitetratwister(z):
     # TODO reduce code duplication with get_tetrahedron()
 
@@ -305,7 +322,7 @@ def create_quasitetratwister(z):
         create_south_pole_cycloplane()
     )
     parts.append(ring_1)
-    
+
     other = create_other_cycloplanes() 
     ring_2 = difference(
         intersect([create_south_pole_cycloplane(), other[0], other[1]]),
@@ -313,10 +330,220 @@ def create_quasitetratwister(z):
     )
     parts.append(ring_2)
 
-    for i in range(2):
-        bpy.ops.object.duplicate()
-        rotate_about_axis("Y", 2 * math.pi / 3)
-        parts.append(bpy.context.object)
+    new_parts = make_rotated_copies(3)
+    parts.extend(new_parts)
+
+    return group_under_empty(parts)
+
+
+def create_bloated_tetratwister(z):
+    # TODO reduce code duplication with get_tetrahedron()
+
+    def create_south_pole_cycloplane():
+        create_cycloplane(z, math.pi, 0)
+        return bpy.context.object
+
+    def create_other_cycloplanes():
+        result = []
+        for i in range(3):
+            latitude = math.pi - math.acos(-1 / 3)
+            longitude = i * 2 * math.pi / 3
+            create_cycloplane(z, latitude, longitude)
+            cycloplane = bpy.context.object
+            result.append(cycloplane)
+        return result
+
+    parts = []
+    others = create_other_cycloplanes() 
+    ring_1 = difference(
+        difference(
+            intersect([others[0], others[1]]),
+            create_south_pole_cycloplane()
+        ),
+        others[2]
+    )
+    parts.append(ring_1)
+    new_parts = make_rotated_copies(3)
+    parts.extend(new_parts)
+
+    others = create_other_cycloplanes() 
+    ring_2 = difference(
+        difference(
+            intersect([create_south_pole_cycloplane(), others[0]]),
+            others[1]
+        ),
+        others[2]
+    )
+    parts.append(ring_2)
+    new_parts = make_rotated_copies(3)
+    parts.extend(new_parts)
+
+    return group_under_empty(parts)
+
+
+def create_quasicubetwister(z):
+    # TODO reduce code duplication with get_cube()
+
+    def create_north_pole_cycloplane():
+        create_cycloplane(z, 0, 0)
+        return bpy.context.object
+
+    def create_south_pole_cycloplane():
+        create_cycloplane(z, math.pi, 0)
+        return bpy.context.object
+
+    def create_equator_cycloplanes():
+        result = []
+        for i in range(4):
+            create_cycloplane(z, math.pi / 2, i * math.pi / 2)
+            cycloplane = bpy.context.object
+            result.append(cycloplane)
+        return result
+
+    parts = []
+
+    north_pole = create_north_pole_cycloplane()
+    south_pole = create_south_pole_cycloplane()
+    equator = create_equator_cycloplanes()
+
+    ring_1 = intersect([north_pole, equator[0], equator[1]])
+    for cycloplane in [south_pole, equator[2], equator[3]]:
+        ring_1 = difference(ring_1, cycloplane)
+    parts.append(ring_1)
+    new_parts = make_rotated_copies(4)
+    parts.extend(new_parts)
+
+    north_pole = create_north_pole_cycloplane()
+    south_pole = create_south_pole_cycloplane()
+    equator = create_equator_cycloplanes()
+
+    ring_2 = intersect([south_pole, equator[0], equator[1]])
+    for cycloplane in [north_pole, equator[2], equator[3]]:
+        ring_2 = difference(ring_2, cycloplane)
+    parts.append(ring_2)
+    new_parts = make_rotated_copies(4)
+    parts.extend(new_parts)
+
+    return group_under_empty(parts)
+
+
+def create_bloated_cubetwister(z):
+    # TODO reduce code duplication with get_cube()
+
+    def create_north_pole_cycloplane():
+        create_cycloplane(z, 0, 0)
+        return bpy.context.object
+
+    def create_south_pole_cycloplane():
+        create_cycloplane(z, math.pi, 0)
+        return bpy.context.object
+
+    def create_equator_cycloplane_1():
+        create_cycloplane(z, math.pi / 2, 0)
+        return bpy.context.object
+
+    def create_equator_cycloplane_2():
+        create_cycloplane(z, math.pi / 2, math.pi / 2)
+        return bpy.context.object
+
+    parts = []
+
+    north_pole = create_north_pole_cycloplane()
+    equator_1 = create_equator_cycloplane_1()
+    ring_1 = intersect([north_pole, equator_1])
+    parts.append(ring_1)
+    new_parts = make_rotated_copies(4)
+    parts.extend(new_parts)
+
+    equator_1 = create_equator_cycloplane_1()
+    equator_2 = create_equator_cycloplane_2()
+    ring_2 = intersect([equator_1, equator_2])
+    parts.append(ring_2)
+    new_parts = make_rotated_copies(4)
+    parts.extend(new_parts)
+
+    equator_1 = create_equator_cycloplane_1()
+    south_pole = create_south_pole_cycloplane()
+    ring_3 = intersect([equator_1, south_pole])
+    parts.append(ring_3)
+    new_parts = make_rotated_copies(4)
+    parts.extend(new_parts)
+
+    return group_under_empty(parts)
+
+
+def create_quasioctatwister(z):
+    # TODO reduce code duplication with get_octahedron()
+
+    latitude = get_3d_angle((1, 0, 0), (0, 0, 0), (1, 1, 1))
+
+    def create_north_cycloplane(i):
+        create_cycloplane(z, latitude, i * math.pi / 2)
+        return bpy.context.object
+
+    def create_south_cycloplane(i):
+        create_cycloplane(z, math.pi - latitude, i * math.pi / 2)
+        return bpy.context.object
+
+    parts = []
+
+    ring_1 = intersect([create_north_cycloplane(i) for i in range(4)])
+    parts.append(ring_1)
+
+    ring_2 = intersect([
+        create_north_cycloplane(0),
+        create_north_cycloplane(1),
+        create_south_cycloplane(0),
+        create_south_cycloplane(1),
+    ])
+    parts.append(ring_2)
+    new_parts = make_rotated_copies(4)
+    parts.extend(new_parts)
+
+    ring_3 = intersect([create_south_cycloplane(i) for i in range(4)])
+    parts.append(ring_3)
+
+    return group_under_empty(parts)
+
+
+def create_bloated_octatwister(z):
+    # TODO reduce code duplication with get_octahedron()
+
+    latitude = get_3d_angle((1, 0, 0), (0, 0, 0), (1, 1, 1))
+
+    def create_north_cycloplane(i):
+        create_cycloplane(z, latitude, i * math.pi / 2)
+        return bpy.context.object
+
+    def create_south_cycloplane(i):
+        create_cycloplane(z, math.pi - latitude, i * math.pi / 2)
+        return bpy.context.object
+
+    parts = []
+
+    ring_1 = intersect([
+        create_north_cycloplane(0),
+        create_north_cycloplane(1),
+    ])
+    parts.append(ring_1)
+    new_parts = make_rotated_copies(4)
+    parts.extend(new_parts)
+
+    ring_2 = intersect([
+        create_north_cycloplane(0),
+        create_south_cycloplane(0),
+    ])
+    parts.append(ring_2)
+    new_parts = make_rotated_copies(4)
+    parts.extend(new_parts)
+
+    ring_3 = intersect([
+        create_south_cycloplane(0),
+        create_south_cycloplane(1),
+    ])
+    parts.append(ring_3)
+    new_parts = make_rotated_copies(4)
+    parts.extend(new_parts)
 
     return group_under_empty(parts)
 
@@ -325,4 +552,20 @@ if __name__ == "__main__":
     # Delete the default cube.
     bpy.ops.object.delete(use_global=False)
 
-    create_quasitetratwister(0.5)
+    spacing = 5.0
+
+    z = 0.14
+
+    functions = [
+        create_quasicubetwister,
+        create_bloated_cubetwister,
+        create_quasioctatwister,
+        create_bloated_octatwister,
+    ]
+
+    for i, function in enumerate(functions):
+        function(z)
+        rotate_about_axis("X", math.pi / 2)
+        bpy.ops.transform.translate(
+            value=(i * spacing, 0, 0)
+        )
