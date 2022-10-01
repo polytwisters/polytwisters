@@ -239,6 +239,32 @@ def realize(node, z):
     return realizer.realize(node)
 
 
+def create_convex_regular_polytwisters(z, spacing=2.5, translate_z=1):
+    platonic_solid_polytwisters = [
+        get_tetratwister(),
+        get_cubetwister(),
+        get_octatwister(),
+        get_dodecatwister(),
+        get_icosatwister(),
+    ]
+    dyadic_twisters = [
+        get_dyadic_twister(3 + n)
+        for n in range(len(platonic_solid_polytwisters))
+    ]
+
+    for i, polytwister in enumerate(platonic_solid_polytwisters):
+        realize(polytwister, z=z)
+        rotate_about_axis("X", math.pi / 2)
+        bpy.ops.transform.translate(value=(i * spacing, 0, translate_z))
+
+    for i, polytwister in enumerate(dyadic_twisters):
+        realize(polytwister, z=z)
+        rotate_about_axis("X", math.pi / 2)
+        bpy.ops.transform.translate(
+            value=(i * spacing, 0, translate_z + spacing)
+        )
+
+
 def get_dyadic_twister(n):
     return intersection([
         cycloplane(math.pi / 2, i * 2 * math.pi / n) for i in range(n)
@@ -313,32 +339,6 @@ def get_icosatwister():
         points.append((math.pi - ICOSAHEDRON_LATITUDE_1, longitude_2))
         points.append((math.pi - ICOSAHEDRON_LATITUDE_2, longitude_2))
     return intersection([cycloplane(*point) for point in points])
-
-
-def create_convex_regular_polytwisters(z, spacing=2.5, translate_z=1):
-    platonic_solid_polytwisters = [
-        get_tetratwister(),
-        get_cubetwister(),
-        get_octatwister(),
-        get_dodecatwister(),
-        get_icosatwister(),
-    ]
-    dyadic_twisters = [
-        get_dyadic_twister(3 + n)
-        for n in range(len(platonic_solid_polytwisters))
-    ]
-
-    for i, polytwister in enumerate(platonic_solid_polytwisters):
-        realize(polytwister, z=z)
-        rotate_about_axis("X", math.pi / 2)
-        bpy.ops.transform.translate(value=(i * spacing, 0, translate_z))
-
-    for i, polytwister in enumerate(dyadic_twisters):
-        realize(polytwister, z=z)
-        rotate_about_axis("X", math.pi / 2)
-        bpy.ops.transform.translate(
-            value=(i * spacing, 0, translate_z + spacing)
-        )
 
 
 def get_quasitetratwister():
