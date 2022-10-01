@@ -427,23 +427,21 @@ def create_quasicubetwister(z):
     ]
     south_pole = {"type": "cycloplane", "latitude": math.pi, "longitude": 0}
 
+    north_ring = difference([
+        intersection([north_pole, equators[0], equators[1]]),
+        intersection([south_pole, equators[2], equators[3]])
+    ])
+    
+    south_ring = difference([
+        intersection([south_pole, equators[0], equators[1]]),
+        intersection([north_pole, equators[2], equators[3]])
+    ])
+
     polytwister = {
         "type": "root",
         "parts": [
-            rotated_copies(
-                difference([
-                    intersection([north_pole, equators[0], equators[1]]),
-                    intersection([south_pole, equators[2], equators[3]])
-                ]),
-                4, 
-            ),
-            rotated_copies(
-                difference([
-                    intersection([south_pole, equators[0], equators[1]]),
-                    intersection([north_pole, equators[2], equators[3]])
-                ]),
-                4,
-            ),
+            rotated_copies(north_ring, 4),
+            rotated_copies(south_ring, 4),
         ],
     }
 
