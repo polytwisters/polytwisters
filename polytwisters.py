@@ -320,7 +320,7 @@ def get_dodecatwister():
     return intersection([cycloplane(*point) for point in points])
 
 
-# Let A be the center of a face of a regular dodecahedron centered at C,
+# Let A be the center of a face of a regular icosahedron centered at C,
 # and let B be one of the three closest vertices. This is the angle ACB.
 ICOSAHEDRON_LATITUDE_1 = get_3d_angle((1, 1, 1), (0, 0, 0), (0, 1, PHI))
 
