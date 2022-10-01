@@ -230,107 +230,102 @@ def realize(node, z):
     return realizer.realize(node)
 
 
-def get_hosohedron(n):
-    result = []
-    for i in range(n):
-        result.append((math.pi / 2, i * 2 * math.pi / n))
-    return result
+def get_dyadic_twister(n):
+    return intersection([
+        cycloplane(math.pi / 2, i * 2 * math.pi / n) for i in range(n)
+    ])
 
+# Let A and B be two vertices of a regular tetrahedron centered at C.
+# This is the angle ACB.
+# On https://en.wikipedia.org/wiki/Tetrahedron#Regular_tetrahedron
+# this is the "Vertex-Center-Vertex angle."
+TETRAHEDRON_LATITUDE = get_3d_angle((1, 1, 1), (0, 0, 0), (1, -1, -1))
 
-def get_tetrahedron():
-    result = []
-    result.append((math.pi, 0))
-
-    # Let A and B be two vertices of a regular tetrahedron centered at C.
-    # This is the angle ACB.
-    # On https://en.wikipedia.org/wiki/Tetrahedron#Regular_tetrahedron
-    # this is the "Vertex-Center-Vertex angle."
-    latitude = get_3d_angle((1, 1, 1), (0, 0, 0), (1, -1, -1))
-
+def get_tetratwister():
+    points = []
+    points.append((math.pi, 0))
     for i in range(3):
-        result.append((math.pi - latitude, i * 2 * math.pi / 3))
-    return result
+        points.append((math.pi - TETRAHEDRON_LATITUDE, i * 2 * math.pi / 3))
+    return intersection([cycloplane(*point) for point in points])
 
 
-def get_cube():
-    result = []
-    result.append((0, 0))
-    result.append((math.pi, 0))
+def get_cubetwister():
+    points = []
+    points.append((0, 0))
+    points.append((math.pi, 0))
     for i in range(4):
-        result.append((math.pi / 2, i * math.pi / 2))
-    return result
+        points.append((math.pi / 2, i * math.pi / 2))
+    return intersection([cycloplane(*point) for point in points])
 
+# Let A be a vertex of a regular octahedron centered at C and let B be
+# the center of an adjacent face. This is the angle ACB.
+OCTAHEDRON_LATITUDE = get_3d_angle((1, 0, 0), (0, 0, 0), (1, 1, 1))
 
-def get_octahedron():
-    result = []
-    # Let A be a vertex of a regular octahedron centered at C and let B be
-    # the center of an adjacent face. This is the angle ACB.
-    latitude = get_3d_angle((1, 0, 0), (0, 0, 0), (1, 1, 1))
+def get_octatwister():
+    points = []
     for i in range(4):
-        result.append((latitude, i * math.pi / 2))
-        result.append((math.pi - latitude, i * math.pi / 2))
-    return result
+        points.append((OCTAHEDRON_LATITUDE, i * math.pi / 2))
+        points.append((math.pi - OCTAHEDRON_LATITUDE, i * math.pi / 2))
+    return intersection([cycloplane(*point) for point in points])
 
+# Let A and B be the centers of two adjacent faces of a regular
+# dodecahedron centered at C. This is the angle ACB.
+# Equivalently, A and B are two adjacent vertices of a regular
+# icosahedron centered at C. We are using the standard definition of
+# icosahedron coordinates.
+DODECAHEDRON_LATITUDE = get_3d_angle((0, 1, PHI), (0, 0, 0), (0, -1, PHI))
 
-def get_dodecahedron():
-    result = []
-    result.append((0, 0))
-    result.append((math.pi, 0))
-    # Let A and B be the centers of two adjacent faces of a regular
-    # dodecahedron centered at C. This is the angle ACB.
-    # Equivalently, A and B are two adjacent vertices of a regular
-    # icosahedron centered at C. We are using the standard definition of
-    # icosahedron coordinates.
-    latitude = get_3d_angle((0, 1, PHI), (0, 0, 0), (0, -1, PHI))
+def get_dodecatwister():
+    points = []
+    points.append((0, 0))
+    points.append((math.pi, 0))
     for j in range(5):
-        result.append((latitude, j * 2 * math.pi / 5))
-        result.append((math.pi - latitude, (j + 1 / 2) * 2 * math.pi / 5))
-    return result
+        points.append((DODECAHEDRON_LATITUDE, j * 2 * math.pi / 5))
+        points.append((math.pi - DODECAHEDRON_LATITUDE, (j + 1 / 2) * 2 * math.pi / 5))
+    return intersection([cycloplane(*point) for point in points])
 
 
-def get_icosahedron():
-    result = []
-    # Let A be the center of a face of a regular dodecahedron centered at C,
-    # and let B be one of the three closest vertices. This is the angle ACB.
-    latitude_1 = get_3d_angle((1, 1, 1), (0, 0, 0), (0, 1, PHI))
-    # Same as above, but B is now one of the three second closest vertices
-    # to A.
-    latitude_2 = get_3d_angle((1, 1, 1), (0, 0, 0), (0, -1, PHI))
+# Let A be the center of a face of a regular dodecahedron centered at C,
+# and let B be one of the three closest vertices. This is the angle ACB.
+ICOSAHEDRON_LATITUDE_1 = get_3d_angle((1, 1, 1), (0, 0, 0), (0, 1, PHI))
+
+# Same as above, but B is now one of the three second closest vertices
+# to A.
+ICOSAHEDRON_LATITUDE_2 = get_3d_angle((1, 1, 1), (0, 0, 0), (0, -1, PHI))
+
+
+def get_icosatwister():
+    points = []
     for j in range(5):
         longitude_1 = j * 2 * math.pi / 5
         longitude_2 = (j + 1 / 2) * 2 * math.pi / 5
-        result.append((latitude_1, longitude_1))
-        result.append((latitude_2, longitude_1))
-        result.append((math.pi - latitude_2, longitude_2))
-        result.append((math.pi - latitude_1, longitude_2))
-    return result
-
-
-def create_convex_polytwister(polyhedron, z):
-    cycloplanes = []
-    for latitude, longitude in polyhedron:
-        cycloplane = create_cycloplane(z, latitude, longitude)
-        cycloplanes.append(cycloplane)
-    return do_intersect(cycloplanes)
+        points.append((ICOSAHEDRON_LATITUDE_1, longitude_1))
+        points.append((ICOSAHEDRON_LATITUDE_2, longitude_1))
+        points.append((math.pi - ICOSAHEDRON_LATITUDE_1, longitude_2))
+        points.append((math.pi - ICOSAHEDRON_LATITUDE_2, longitude_2))
+    return intersection([cycloplane(*point) for point in points])
 
 
 def create_convex_regular_polytwisters(z, spacing=2.5, translate_z=1):
-    platonic_solids = [
-        get_tetrahedron(),
-        get_cube(),
-        get_octahedron(),
-        get_dodecahedron(),
-        get_icosahedron(),
+    platonic_solid_polytwisters = [
+        get_tetratwister(),
+        get_cubetwister(),
+        get_octatwister(),
+        get_dodecatwister(),
+        get_icosatwister(),
     ]
-    hosohedra = [get_hosohedron(3 + n) for n in range(len(platonic_solids))]
+    dyadic_twisters = [
+        get_dyadic_twister(3 + n)
+        for n in range(len(platonic_solid_polytwisters))
+    ]
 
-    for i, polyhedron in enumerate(platonic_solids):
-        create_convex_polytwister(polyhedron, z)
+    for i, polytwister in enumerate(platonic_solid_polytwisters):
+        realize(polytwister, z=z)
         rotate_about_axis("X", math.pi / 2)
         bpy.ops.transform.translate(value=(i * spacing, 0, translate_z))
 
-    for i, polyhedron in enumerate(hosohedra):
-        create_convex_polytwister(polyhedron, z)
+    for i, polytwister in enumerate(dyadic_twisters):
+        realize(polytwister, z=z)
         rotate_about_axis("X", math.pi / 2)
         bpy.ops.transform.translate(
             value=(i * spacing, 0, translate_z + spacing)
@@ -532,6 +527,8 @@ if __name__ == "__main__":
 
     z = 0.14
 
+    create_convex_regular_polytwisters(z)
+
     functions = [
         create_quasicubetwister,
         create_bloated_cubetwister,
@@ -543,5 +540,5 @@ if __name__ == "__main__":
         function(z)
         rotate_about_axis("X", math.pi / 2)
         bpy.ops.transform.translate(
-            value=(i * spacing, 0, 0)
+            value=(i * spacing, 0, -spacing)
         )
