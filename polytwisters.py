@@ -27,6 +27,21 @@ def get_3d_angle(a, b, c):
     return math.acos((a_2 + c_2 - b_2) / (2 * math.sqrt(a_2 * c_2)))
 
 
+def intersection(nodes):
+    """Shortcut function for the intersection node type."""
+    return {"type": "intersection", "operands": nodes}
+
+
+def difference(nodes):
+    """Shortcut function for the difference node type."""
+    return {"type": "difference", "operands": nodes}
+
+
+def rotated_copies(node, order):
+    """Shortcut function the rotated_copies node type."""
+    return {"type": "rotated_copies", "order": order, "operand": node}
+
+
 def deselect_all():
     bpy.ops.object.select_all(action="DESELECT")
 
@@ -157,11 +172,11 @@ def do_boolean(operation, objects, delete=True):
     return bpy.context.object
 
 
-def intersect(objects):
+def do_intersect(objects):
     return do_boolean("INTERSECT", objects)
 
 
-def difference(object_1, object_2):
+def do_difference(object_1, object_2):
     return do_boolean("DIFFERENCE", [object_1, object_2])
 
 
@@ -286,7 +301,7 @@ def create_convex_polytwister(polyhedron, z):
     for latitude, longitude in polyhedron:
         cycloplane = create_cycloplane(z, latitude, longitude)
         cycloplanes.append(cycloplane)
-    return intersect(cycloplanes)
+    return do_intersect(cycloplanes)
 
 
 def create_convex_regular_polytwisters(z, spacing=2.5, translate_z=1):
@@ -339,15 +354,15 @@ def create_quasitetratwister(z):
         return result
 
     parts = []
-    ring_1 = difference(
-        intersect(create_other_cycloplanes()),
+    ring_1 = do_difference(
+        do_intersect(create_other_cycloplanes()),
         create_south_pole_cycloplane()
     )
     parts.append(ring_1)
 
     other = create_other_cycloplanes() 
-    ring_2 = difference(
-        intersect([create_south_pole_cycloplane(), other[0], other[1]]),
+    ring_2 = do_difference(
+        do_intersect([create_south_pole_cycloplane(), other[0], other[1]]),
         other[2]
     )
     parts.append(ring_2)
@@ -377,9 +392,9 @@ def create_bloated_tetratwister(z):
 
     parts = []
     others = create_other_cycloplanes() 
-    ring_1 = difference(
-        difference(
-            intersect([others[0], others[1]]),
+    ring_1 = do_difference(
+        do_difference(
+            do_intersect([others[0], others[1]]),
             create_south_pole_cycloplane()
         ),
         others[2]
@@ -389,9 +404,9 @@ def create_bloated_tetratwister(z):
     parts.extend(new_parts)
 
     others = create_other_cycloplanes() 
-    ring_2 = difference(
-        difference(
-            intersect([create_south_pole_cycloplane(), others[0]]),
+    ring_2 = do_difference(
+        do_difference(
+            do_intersect([create_south_pole_cycloplane(), others[0]]),
             others[1]
         ),
         others[2]
@@ -415,38 +430,20 @@ def create_quasicubetwister(z):
     polytwister = {
         "type": "root",
         "parts": [
-            {
-                "type": "rotated_copies",
-                "order": 4,
-                "operand": {
-                    "type": "difference",
-                    "operands": [
-                        {
-                            "type": "intersection",
-                            "operands": [north_pole, equators[0], equators[1]]
-                        },
-                        south_pole,
-                        equators[2],
-                        equators[3]
-                    ],
-                },
-            },
-            {
-                "type": "rotated_copies",
-                "order": 4,
-                "operand": {
-                    "type": "difference",
-                    "operands": [
-                        {
-                            "type": "intersection",
-                            "operands": [south_pole, equators[0], equators[1]]
-                        },
-                        north_pole,
-                        equators[2],
-                        equators[3]
-                    ],
-                },
-            },
+            rotated_copies(
+                difference([
+                    intersection([north_pole, equators[0], equators[1]]),
+                    intersection([south_pole, equators[2], equators[3]])
+                ]),
+                4, 
+            ),
+            rotated_copies(
+                difference([
+                    intersection([south_pole, equators[0], equators[1]]),
+                    intersection([north_pole, equators[2], equators[3]])
+                ]),
+                4,
+            ),
         ],
     }
 
@@ -477,21 +474,21 @@ def create_bloated_cubetwister(z):
 
     north_pole = create_north_pole_cycloplane()
     equator_1 = create_equator_cycloplane_1()
-    ring_1 = intersect([north_pole, equator_1])
+    ring_1 = do_intersect([north_pole, equator_1])
     parts.append(ring_1)
     new_parts = make_rotated_copies(4)
     parts.extend(new_parts)
 
     equator_1 = create_equator_cycloplane_1()
     equator_2 = create_equator_cycloplane_2()
-    ring_2 = intersect([equator_1, equator_2])
+    ring_2 = do_intersect([equator_1, equator_2])
     parts.append(ring_2)
     new_parts = make_rotated_copies(4)
     parts.extend(new_parts)
 
     equator_1 = create_equator_cycloplane_1()
     south_pole = create_south_pole_cycloplane()
-    ring_3 = intersect([equator_1, south_pole])
+    ring_3 = do_intersect([equator_1, south_pole])
     parts.append(ring_3)
     new_parts = make_rotated_copies(4)
     parts.extend(new_parts)
@@ -514,10 +511,10 @@ def create_quasioctatwister(z):
 
     parts = []
 
-    ring_1 = intersect([create_north_cycloplane(i) for i in range(4)])
+    ring_1 = do_intersect([create_north_cycloplane(i) for i in range(4)])
     parts.append(ring_1)
 
-    ring_2 = intersect([
+    ring_2 = do_intersect([
         create_north_cycloplane(0),
         create_north_cycloplane(1),
         create_south_cycloplane(0),
@@ -527,7 +524,7 @@ def create_quasioctatwister(z):
     new_parts = make_rotated_copies(4)
     parts.extend(new_parts)
 
-    ring_3 = intersect([create_south_cycloplane(i) for i in range(4)])
+    ring_3 = do_intersect([create_south_cycloplane(i) for i in range(4)])
     parts.append(ring_3)
 
     return group_under_empty(parts)
@@ -548,7 +545,7 @@ def create_bloated_octatwister(z):
 
     parts = []
 
-    ring_1 = intersect([
+    ring_1 = do_intersect([
         create_north_cycloplane(0),
         create_north_cycloplane(1),
     ])
@@ -556,7 +553,7 @@ def create_bloated_octatwister(z):
     new_parts = make_rotated_copies(4)
     parts.extend(new_parts)
 
-    ring_2 = intersect([
+    ring_2 = do_intersect([
         create_north_cycloplane(0),
         create_south_cycloplane(0),
     ])
@@ -564,7 +561,7 @@ def create_bloated_octatwister(z):
     new_parts = make_rotated_copies(4)
     parts.extend(new_parts)
 
-    ring_3 = intersect([
+    ring_3 = do_intersect([
         create_south_cycloplane(0),
         create_south_cycloplane(1),
     ])
