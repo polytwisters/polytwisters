@@ -185,6 +185,15 @@ def do_difference(object_1, object_2):
     return do_boolean("DIFFERENCE", [object_1, object_2])
 
 
+def make_rotated_copies(n):
+    copies = []
+    for i in range(n - 1):
+        bpy.ops.object.duplicate()
+        rotate_about_axis("Y", 2 * math.pi / n)
+        copies.append(bpy.context.object)
+    return copies
+
+
 class _Realizer:
 
     def __init__(self, z):
@@ -332,99 +341,59 @@ def create_convex_regular_polytwisters(z, spacing=2.5, translate_z=1):
         )
 
 
-def make_rotated_copies(n):
-    copies = []
-    for i in range(n - 1):
-        bpy.ops.object.duplicate()
-        rotate_about_axis("Y", 2 * math.pi / n)
-        copies.append(bpy.context.object)
-    return copies
+def get_quasitetratwister():
+    south_pole = cycloplane(math.pi, 0)
+    others = [
+        cycloplane(math.pi - TETRAHEDRON_LATITUDE, i * 2 * math.pi / 3)
+        for i in range(3)
+    ]
 
-
-def create_quasitetratwister(z):
-    # TODO reduce code duplication with get_tetrahedron()
-
-    def create_south_pole_cycloplane():
-        create_cycloplane(z, math.pi, 0)
-        return bpy.context.object
-
-    def create_other_cycloplanes():
-        result = []
-        for i in range(3):
-            latitude = math.pi - math.acos(-1 / 3)
-            longitude = i * 2 * math.pi / 3
-            create_cycloplane(z, latitude, longitude)
-            cycloplane = bpy.context.object
-            result.append(cycloplane)
-        return result
-
-    parts = []
-    ring_1 = do_difference(
-        do_intersect(create_other_cycloplanes()),
-        create_south_pole_cycloplane()
+    ring_1 = difference([intersection(others), south_pole])
+    ring_2 = rotated_copies(
+        difference([
+            intersection([south_pole, others[0], others[1]]), others[2]
+        ]),
+        3
     )
-    parts.append(ring_1)
 
-    other = create_other_cycloplanes() 
-    ring_2 = do_difference(
-        do_intersect([create_south_pole_cycloplane(), other[0], other[1]]),
-        other[2]
-    )
-    parts.append(ring_2)
+    polytwister = {
+        "type": "root",
+        "parts": [ring_1, ring_2]
+    }
 
-    new_parts = make_rotated_copies(3)
-    parts.extend(new_parts)
-
-    return group_under_empty(parts)
+    return polytwister
 
 
-def create_bloated_tetratwister(z):
-    # TODO reduce code duplication with get_tetrahedron()
+def get_bloated_tetratwister():
+    south_pole = cycloplane(math.pi, 0)
+    others = [
+        cycloplane(math.pi - TETRAHEDRON_LATITUDE, i * 2 * math.pi / 3)
+        for i in range(3)
+    ]
 
-    def create_south_pole_cycloplane():
-        create_cycloplane(z, math.pi, 0)
-        return bpy.context.object
+    ring_1 = difference([
+        intersection([others[0], others[1]]),
+        south_pole,
+        others[2],
+    ])
+    ring_2 = difference([
+        intersection([south_pole, others[0]]),
+        others[1],
+        others[2],
+    ])
 
-    def create_other_cycloplanes():
-        result = []
-        for i in range(3):
-            latitude = math.pi - math.acos(-1 / 3)
-            longitude = i * 2 * math.pi / 3
-            create_cycloplane(z, latitude, longitude)
-            cycloplane = bpy.context.object
-            result.append(cycloplane)
-        return result
+    polytwister = {
+        "type": "root",
+        "parts": [
+            rotated_copies(ring_1, 3),
+            rotated_copies(ring_2, 3),
+        ]
+    }
 
-    parts = []
-    others = create_other_cycloplanes() 
-    ring_1 = do_difference(
-        do_difference(
-            do_intersect([others[0], others[1]]),
-            create_south_pole_cycloplane()
-        ),
-        others[2]
-    )
-    parts.append(ring_1)
-    new_parts = make_rotated_copies(3)
-    parts.extend(new_parts)
-
-    others = create_other_cycloplanes() 
-    ring_2 = do_difference(
-        do_difference(
-            do_intersect([create_south_pole_cycloplane(), others[0]]),
-            others[1]
-        ),
-        others[2]
-    )
-    parts.append(ring_2)
-    new_parts = make_rotated_copies(3)
-    parts.extend(new_parts)
-
-    return group_under_empty(parts)
+    return polytwister
 
 
-
-def create_quasicubetwister(z):
+def get_quasicubetwister():
     north_pole = cycloplane(0, 0)
     equators = [
         cycloplane(math.pi / 2, i * math.pi / 2)
@@ -450,10 +419,10 @@ def create_quasicubetwister(z):
         ],
     }
 
-    return realize(polytwister, z=z)
+    return polytwister
 
 
-def create_bloated_cubetwister(z):
+def get_bloated_cubetwister():
     north_pole = cycloplane(0, 0)
     equators = [
         cycloplane(math.pi / 2, i * math.pi / 2)
@@ -476,10 +445,10 @@ def create_bloated_cubetwister(z):
         ],
     }
 
-    return realize(polytwister, z=z)
+    return polytwister
 
 
-def create_quasioctatwister(z):
+def get_quasioctatwister():
     latitude = get_3d_angle((1, 0, 0), (0, 0, 0), (1, 1, 1))
     north = [cycloplane(latitude, i * math.pi / 2) for i in range(4)]
     south = [cycloplane(math.pi - latitude, i * math.pi / 2) for i in range(4)]
@@ -495,10 +464,10 @@ def create_quasioctatwister(z):
         "parts": [ring_1, ring_2, ring_3],
     }
 
-    return realize(polytwister, z=z)
+    return polytwister
 
 
-def create_bloated_octatwister(z):
+def get_bloated_octatwister():
     latitude = get_3d_angle((1, 0, 0), (0, 0, 0), (1, 1, 1))
     north = [cycloplane(latitude, i * math.pi / 2) for i in range(4)]
     south = [cycloplane(math.pi - latitude, i * math.pi / 2) for i in range(4)]
@@ -516,7 +485,7 @@ def create_bloated_octatwister(z):
         ],
     }
 
-    return realize(polytwister, z=z)
+    return polytwister
 
 
 if __name__ == "__main__":
@@ -529,15 +498,17 @@ if __name__ == "__main__":
 
     create_convex_regular_polytwisters(z)
 
-    functions = [
-        create_quasicubetwister,
-        create_bloated_cubetwister,
-        create_quasioctatwister,
-        create_bloated_octatwister,
+    polytwisters = [
+        get_quasitetratwister(),
+        get_bloated_tetratwister(),
+        get_quasicubetwister(),
+        get_bloated_cubetwister(),
+        get_quasioctatwister(),
+        get_bloated_octatwister(),
     ]
 
-    for i, function in enumerate(functions):
-        function(z)
+    for i, polytwister in enumerate(polytwisters):
+        realize(polytwister, z=z)
         rotate_about_axis("X", math.pi / 2)
         bpy.ops.transform.translate(
             value=(i * spacing, 0, -spacing)
