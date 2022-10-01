@@ -128,10 +128,10 @@ def _create_south_pole_cycloplane(z):
     return bpy.context.object
 
 
-def intersect(objects, delete=True):
-    """Given a list of Blender objects, compute the intersection of all of
+def do_boolean(operation, objects, delete=True):
+    """Given a list of Blender objects, compute a Boolean op of all of
     them by creating and applying Boolean modifiers on the first object, then
-    deleting the rest of the objects.
+    optionally deleting the rest of the objects.
 
     It is assumed that there are no other modifiers on the first object."""
     first = objects[0]
@@ -144,7 +144,7 @@ def intersect(objects, delete=True):
         bpy.context.view_layer.objects.active = first
         bpy.ops.object.modifier_add(type="BOOLEAN")
         modifier = bpy.context.object.modifiers[-1]
-        modifier.operation = "INTERSECT"
+        modifier.operation = operation
         modifier.object = other
         bpy.ops.object.modifier_apply(modifier=modifier.name)
 
@@ -157,27 +157,52 @@ def intersect(objects, delete=True):
     return bpy.context.object
 
 
+def intersect(objects):
+    return do_boolean("INTERSECT", objects)
+
+
 def difference(object_1, object_2):
-    """Given a list of Blender objects, compute the intersection of all of
-    them by creating and applying Boolean modifiers on the first object, then
-    deleting the rest of the objects.
+    return do_boolean("DIFFERENCE", [object_1, object_2])
 
-    It is assumed that there are no other modifiers on the first object."""
-    deselect_all()
-    object_1.select_set(True)
-    bpy.context.view_layer.objects.active = object_1
-    bpy.ops.object.modifier_add(type="BOOLEAN")
-    modifier = bpy.context.object.modifiers[-1]
-    modifier.operation = "DIFFERENCE"
-    modifier.object = object_2
-    bpy.ops.object.modifier_apply(modifier=modifier.name)
 
-    deselect_all()
-    object_2.select_set(True)
-    bpy.ops.object.delete()
+class Realizer:
 
-    object_1.select_set(True)
-    return bpy.context.object
+    def __init__(self, z):
+        self.z = z
+
+    def realize(self, node):
+        type_ = node["type"]
+        if type_ == "root":
+            parts = []
+            for child in node["parts"]:
+                part = self.realize(child)
+                if isinstance(part, list):
+                    parts.extend(part)
+                else:
+                    parts.append(part)
+            return group_under_empty(parts)
+        elif type_ == "cycloplane":
+            create_cycloplane(
+                self.z, node["latitude"], node["longitude"]
+            )
+            return bpy.context.object
+        elif type_ == "rotated_copies":
+            first = self.realize(node["operand"])
+            return [first] + make_rotated_copies(node["order"])
+        elif type_ == "intersection":
+            operands = []
+            for child in node["operands"]:
+                operand = self.realize(child)
+                operands.append(operand)
+            return do_boolean("INTERSECT", operands)
+        elif type_ == "difference":
+            operands = []
+            for child in node["operands"]:
+                operand = self.realize(child)
+                operands.append(operand)
+            return do_boolean("DIFFERENCE", operands)
+        else:
+            raise ValueError(f'Invalid node type {type_}')
 
 
 def get_hosohedron(n):
@@ -377,48 +402,6 @@ def create_bloated_tetratwister(z):
 
     return group_under_empty(parts)
 
-
-class Realizer:
-
-    def __init__(self, z):
-        self.z = z
-
-    def realize(self, node):
-        type_ = node["type"]
-        if type_ == "root":
-            parts = []
-            for child in node["parts"]:
-                part = self.realize(child)
-                if isinstance(part, list):
-                    parts.extend(part)
-                else:
-                    parts.append(part)
-            return group_under_empty(parts)
-        elif type_ == "cycloplane":
-            create_cycloplane(
-                self.z, node["latitude"], node["longitude"]
-            )
-            return bpy.context.object
-        elif type_ == "rotated_copies":
-            first = self.realize(node["operand"])
-            return [first] + make_rotated_copies(node["order"])
-        elif type_ == "intersection":
-            operands = []
-            for child in node["operands"]:
-                operand = self.realize(child)
-                operands.append(operand)
-            return intersect(operands)
-        elif type_ == "difference":
-            operands = []
-            for child in node["operands"]:
-                operand = self.realize(child)
-                operands.append(operand)
-            result = operands[0]
-            for other in operands[1:]:
-                result = difference(result, other)
-            return result
-        else:
-            raise ValueError(f'Invalid node type {type_}')
 
 
 def create_quasicubetwister(z):
