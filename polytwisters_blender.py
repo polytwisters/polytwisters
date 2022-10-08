@@ -2,7 +2,9 @@ import math
 import os
 import sys
 import warnings
+
 import bpy
+import mathutils
 
 directory = os.path.dirname(bpy.data.filepath)
 if directory not in sys.path:
@@ -11,6 +13,7 @@ import polytwisters
 
 EPSILON = 1e-10
 LARGE = 10e3
+DEFAULT_CYLINDER_RESOLUTION = 64
 
 
 def deselect_all():
@@ -48,7 +51,12 @@ def group_under_empty(parts):
     return parent
 
 
-def create_cycloplane(z, latitude, longitude):
+def create_cycloplane(
+    z,
+    latitude,
+    longitude,
+    cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION,
+):
     """Create a cross section of a cycloplane constructed from a Hopf fiber.
     z is the cross section coordinate, latitude and longitude are the
     coordinates of the point on the sphere. Said point is transformed via the
@@ -71,7 +79,7 @@ def create_cycloplane(z, latitude, longitude):
     bpy.ops.mesh.primitive_cylinder_add(
         radius=1,
         depth=LARGE,
-        vertices=64,
+        vertices=cylinder_resolution,
         location=(0, 0, 0),
         scale=(1, 1, 1),
     )
@@ -92,6 +100,10 @@ def create_cycloplane(z, latitude, longitude):
     # rotations together.
     rotate_about_axis("X", -theta)
     rotate_about_axis("Y", phi)
+
+    bpy.ops.object.shade_smooth()
+    bpy.context.object.data.use_auto_smooth = True
+    bpy.context.object.data.auto_smooth_angle = math.radians(30.0)
 
     return bpy.context.object
 
@@ -153,8 +165,9 @@ def make_rotated_copies(n):
 
 class _Realizer:
 
-    def __init__(self, z):
+    def __init__(self, z, cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION):
         self.z = z
+        self.cylinder_resolution = cylinder_resolution
 
     def realize(self, polytwister):
         self.traverse_root(polytwister["tree"])
@@ -181,7 +194,10 @@ class _Realizer:
         type_ = node["type"]
         if type_ == "cycloplane":
             create_cycloplane(
-                self.z, node["latitude"], node["longitude"]
+                self.z,
+                node["latitude"],
+                node["longitude"],
+                cylinder_resolution=self.cylinder_resolution,
             )
             return bpy.context.object
         elif type_ == "rotated_copies":
@@ -209,8 +225,8 @@ class _Realizer:
             raise ValueError(f'Invalid node type {type_}')
 
 
-def realize(polytwister, z):
-    realizer = _Realizer(z)
+def realize(polytwister, z, cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION):
+    realizer = _Realizer(z, cylinder_resolution=cylinder_resolution)
     return realizer.realize(polytwister)
 
 
@@ -238,6 +254,56 @@ def create_convex_regular_polytwisters(z, spacing=2.5, translate_z=1):
         )
 
 
+def rotation_to_point_to_origin(point):
+    """Given a location of an object pointing along the X-axis, return a set of
+    Euler angles that will rotate that object so it points at the origin."""
+    # See https://blender.stackexchange.com/a/5220.
+    direction = -mathutils.Vector(point)
+    rotation_quaternion = direction.to_track_quat("-Z", "Y")
+    return rotation_quaternion.to_euler()
+
+
+def set_up_camera_and_lights():
+    camera_location = (10, 10, 3)
+    bpy.ops.object.camera_add(
+        location=camera_location,
+        rotation=rotation_to_point_to_origin(camera_location)
+    )
+    bpy.context.scene.camera = bpy.context.object
+
+    light_specs = [
+        {"location": (-10, 10, 10), "power": 500},
+        {"location": (10, -10, -10), "power": 200},
+        {"location": (10, -10, 5), "power": 500},
+    ]
+
+    for light_spec in light_specs:
+        location = light_spec["location"]
+        bpy.ops.object.light_add(
+            type="AREA",
+            radius=5,
+            location=location,
+            rotation=rotation_to_point_to_origin(location)
+        )
+        bpy.context.object.data.energy = light_spec["power"]
+
+    bpy.context.scene.render.engine = "CYCLES"
+    bpy.context.scene.cycles.device = "GPU"
+
+
+def render():
+    for area in bpy.context.screen.areas:
+        if area.type == "IMAGE_EDITOR":
+            image_editor = area
+            break 
+    else:
+        raise RuntimeError("IMAGE_EDITOR area not found")
+
+    with bpy.context.temp_override(area=image_editor):
+        bpy.ops.render.render()
+        bpy.ops.image.save_as(filepath="render.png")
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -250,12 +316,16 @@ if __name__ == "__main__":
             f"{major}.{minor}.{patch}. Errors may occur."
         )
 
-    # Delete the default cube.
+    # Delete the default objects.
+    bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
+
+    set_up_camera_and_lights()
 
     parser = argparse.ArgumentParser()
     parser.add_argument("polytwister")
     parser.add_argument("z", type=float)
+    parser.add_argument("-r", "--resolution", type=int, default=DEFAULT_CYLINDER_RESOLUTION)
     parser.add_argument("-s", "--spacing", type=float, default=5.0)
 
     argv = sys.argv
@@ -272,7 +342,7 @@ if __name__ == "__main__":
 
     if polytwister_name == "all":
         for i, polytwister in enumerate(polytwisters.ALL_POLYTWISTERS):
-            realize(polytwister, args.z)
+            realize(polytwister, args.z, cylinder_resolution=args.resolution)
             bpy.ops.transform.translate(value=(i * args.spacing, 0, 0))
     else:
         for polytwister in polytwisters.ALL_POLYTWISTERS:
@@ -280,4 +350,6 @@ if __name__ == "__main__":
                 break
         else:
             raise ValueError(f'Polytwister "polytwister_name" not found.')
-        realize(polytwister, args.z)
+        realize(polytwister, args.z, cylinder_resolution=args.resolution)
+
+    render()
