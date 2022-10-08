@@ -279,3 +279,25 @@ def get_bloated_octatwister():
     }
 
     return polytwister
+
+
+def get_quasidodecatwister():
+    north = DODECAHEDRON_NORTH
+    south = DODECAHEDRON_SOUTH
+
+    ring_1 = intersection([NORTH_POLE, north[0], north[1]])
+    ring_2 = intersection([north[0], north[1], south[0]])
+    ring_3 = intersection([north[1], south[0], south[1]])
+    ring_4 = intersection([SOUTH_POLE, south[0], south[1]])
+
+    polytwister = {
+        "type": "root",
+        "parts": [
+            rotated_copies(ring_1, 5),
+            rotated_copies(ring_2, 5),
+            rotated_copies(ring_3, 5),
+            rotated_copies(ring_4, 5),
+        ],
+    }
+
+    return polytwister

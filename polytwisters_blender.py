@@ -248,6 +248,7 @@ if __name__ == "__main__":
         polytwisters.get_bloated_cubetwister(),
         polytwisters.get_quasioctatwister(),
         polytwisters.get_bloated_octatwister(),
+        polytwisters.get_quasidodecatwister(),
     ]
 
     for i, polytwister in enumerate(polytwisters):
