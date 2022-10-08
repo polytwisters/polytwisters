@@ -325,3 +325,23 @@ def get_quasidodecatwister():
     }
 
     return polytwister
+
+ALL_POLYTWISTERS = [
+    get_dyadic_twister(3),
+    get_dyadic_twister(4),
+    get_dyadic_twister(5),
+    get_dyadic_twister(6),
+    get_dyadic_twister(7),
+    get_tetratwister(),
+    get_quasitetratwister(),
+    get_bloated_tetratwister(),
+    get_cubetwister(),
+    get_quasicubetwister(),
+    get_bloated_cubetwister(),
+    get_octatwister(),
+    get_quasioctatwister(),
+    get_bloated_octatwister(),
+    get_dodecatwister(),
+    get_quasidodecatwister(),
+    get_icosatwister(),
+]

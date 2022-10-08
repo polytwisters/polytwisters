@@ -158,6 +158,9 @@ class _Realizer:
 
     def realize(self, polytwister):
         self.traverse_root(polytwister["tree"])
+        # Change the polytwister's axis of symmetry from Y to Z so it stands
+        # upright in Blender, purely for aesthetic reasons.
+        rotate_about_axis("X", math.pi / 2)
 
     def traverse_root(self, node):
         type_ = node["type"]
@@ -226,12 +229,10 @@ def create_convex_regular_polytwisters(z, spacing=2.5, translate_z=1):
 
     for i, polytwister in enumerate(platonic_solid_polytwisters):
         realize(polytwister, z=z)
-        rotate_about_axis("X", math.pi / 2)
         bpy.ops.transform.translate(value=(i * spacing, 0, translate_z))
 
     for i, polytwister in enumerate(dyadic_twisters):
         realize(polytwister, z=z)
-        rotate_about_axis("X", math.pi / 2)
         bpy.ops.transform.translate(
             value=(i * spacing, 0, translate_z + spacing)
         )
@@ -252,25 +253,31 @@ if __name__ == "__main__":
     # Delete the default cube.
     bpy.ops.object.delete(use_global=False)
 
-    spacing = 5.0
+    parser = argparse.ArgumentParser()
+    parser.add_argument("polytwister")
+    parser.add_argument("z", type=float)
+    parser.add_argument("-s", "--spacing", type=float, default=5.0)
 
-    z = 0.14
+    argv = sys.argv
+    for i, argument in enumerate(argv):
+        if argument == "--":
+            argv = argv[i + 1:]
+            break
+    else:
+        argv = []
+    args = parser.parse_args(argv)
 
-    create_convex_regular_polytwisters(z)
+    polytwister_name = args.polytwister
+    polytwister_name = polytwister_name.replace("_", " ")
 
-    polytwisters = [
-        polytwisters.get_quasitetratwister(),
-        polytwisters.get_bloated_tetratwister(),
-        polytwisters.get_quasicubetwister(),
-        polytwisters.get_bloated_cubetwister(),
-        polytwisters.get_quasioctatwister(),
-        polytwisters.get_bloated_octatwister(),
-        polytwisters.get_quasidodecatwister(),
-    ]
-
-    for i, polytwister in enumerate(polytwisters):
-        realize(polytwister, z=z)
-        rotate_about_axis("X", math.pi / 2)
-        bpy.ops.transform.translate(
-            value=(i * spacing, 0, -spacing)
-        )
+    if polytwister_name == "all":
+        for i, polytwister in enumerate(polytwisters.ALL_POLYTWISTERS):
+            realize(polytwister, args.z)
+            bpy.ops.transform.translate(value=(i * args.spacing, 0, 0))
+    else:
+        for polytwister in polytwisters.ALL_POLYTWISTERS:
+            if polytwister_name in polytwister["names"]:
+                break
+        else:
+            raise ValueError(f'Polytwister "polytwister_name" not found.')
+        realize(polytwister, args.z)
