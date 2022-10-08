@@ -339,7 +339,7 @@ def get_bloated_dodecatwister():
     ring_6 = intersection([SOUTH_POLE, south[0]])
 
     polytwister = {
-        "names": ["bloated dodecatwister, inverted dodecatwister"],
+        "names": ["bloated dodecatwister", "inverted dodecatwister"],
         "tree": union([
             rotated_copies(ring_1, 5),
             rotated_copies(ring_2, 5),
