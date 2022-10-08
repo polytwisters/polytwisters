@@ -69,49 +69,91 @@ def get_dyadic_twister(n):
         cycloplane(math.pi / 2, i * 2 * math.pi / n) for i in range(n)
     ])
 
+
+NORTH_POLE = cycloplane(0, 0)
+SOUTH_POLE = cycloplane(math.pi, 0)
+
+
+TETRAHEDRON_NORTH = []
+for i in range(3):
+    TETRAHEDRON_NORTH.append(
+        cycloplane(math.pi - TETRAHEDRON_LATITUDE, i * 2 * math.pi / 3)
+    )
+
+CUBE_EQUATOR = []
+for i in range(4):
+    CUBE_EQUATOR.append(cycloplane(math.pi / 2, i * math.pi / 2))
+
+
+OCTAHEDRON_NORTH = []
+OCTAHEDRON_SOUTH = []
+for i in range(4):
+    OCTAHEDRON_NORTH.append(
+        cycloplane(OCTAHEDRON_LATITUDE, i * math.pi / 2)
+    )
+    OCTAHEDRON_SOUTH.append(
+        cycloplane(math.pi - OCTAHEDRON_LATITUDE, i * math.pi / 2)
+    )
+
+
+DODECAHEDRON_NORTH = []
+DODECAHEDRON_SOUTH = []
+for i in range(5):
+    DODECAHEDRON_NORTH.append(
+        cycloplane(DODECAHEDRON_LATITUDE, i * 2 * math.pi / 5)
+    )
+    DODECAHEDRON_SOUTH.append(
+        cycloplane(math.pi - DODECAHEDRON_LATITUDE, (i + 1 / 2) * 2 * math.pi / 5)
+    )
+
+ICOSAHEDRON_NORTH_1 = []
+ICOSAHEDRON_NORTH_2 = []
+ICOSAHEDRON_SOUTH_1 = []
+ICOSAHEDRON_SOUTH_2 = []
+for i in range(5):
+    longitude_1 = i * 2 * math.pi / 5
+    longitude_2 = (i + 1 / 2) * 2 * math.pi / 5
+    ICOSAHEDRON_NORTH_1.append(
+        cycloplane(ICOSAHEDRON_LATITUDE_1, longitude_1)
+    )
+    ICOSAHEDRON_NORTH_2.append(
+        cycloplane(ICOSAHEDRON_LATITUDE_2, longitude_1)
+    )
+    ICOSAHEDRON_SOUTH_1.append(
+        cycloplane(math.pi - ICOSAHEDRON_LATITUDE_1, longitude_2)
+    )
+    ICOSAHEDRON_SOUTH_2.append(
+        cycloplane(math.pi - ICOSAHEDRON_LATITUDE_2, longitude_2)
+    )
+
 def get_tetratwister():
-    points = []
-    points.append((math.pi, 0))
-    for i in range(3):
-        points.append((math.pi - TETRAHEDRON_LATITUDE, i * 2 * math.pi / 3))
-    return intersection([cycloplane(*point) for point in points])
+    cycloplanes = [SOUTH_POLE] + TETRAHEDRON_NORTH
+    return intersection(cycloplanes)
 
 
 def get_cubetwister():
-    points = []
-    points.append((0, 0))
-    points.append((math.pi, 0))
-    for i in range(4):
-        points.append((math.pi / 2, i * math.pi / 2))
-    return intersection([cycloplane(*point) for point in points])
+    cycloplanes = [NORTH_POLE, SOUTH_POLE] + CUBE_EQUATOR
+    return intersection(cycloplanes)
+
 
 def get_octatwister():
-    points = []
-    for i in range(4):
-        points.append((OCTAHEDRON_LATITUDE, i * math.pi / 2))
-        points.append((math.pi - OCTAHEDRON_LATITUDE, i * math.pi / 2))
-    return intersection([cycloplane(*point) for point in points])
+    cycloplanes = OCTAHEDRON_NORTH + OCTAHEDRON_SOUTH
+    return intersection(cycloplanes)
+
 
 def get_dodecatwister():
-    points = []
-    points.append((0, 0))
-    points.append((math.pi, 0))
-    for j in range(5):
-        points.append((DODECAHEDRON_LATITUDE, j * 2 * math.pi / 5))
-        points.append((math.pi - DODECAHEDRON_LATITUDE, (j + 1 / 2) * 2 * math.pi / 5))
-    return intersection([cycloplane(*point) for point in points])
+    cycloplanes = [NORTH_POLE, SOUTH_POLE] + DODECAHEDRON_NORTH + DODECAHEDRON_SOUTH
+    return intersection(cycloplanes)
 
 
 def get_icosatwister():
-    points = []
-    for j in range(5):
-        longitude_1 = j * 2 * math.pi / 5
-        longitude_2 = (j + 1 / 2) * 2 * math.pi / 5
-        points.append((ICOSAHEDRON_LATITUDE_1, longitude_1))
-        points.append((ICOSAHEDRON_LATITUDE_2, longitude_1))
-        points.append((math.pi - ICOSAHEDRON_LATITUDE_1, longitude_2))
-        points.append((math.pi - ICOSAHEDRON_LATITUDE_2, longitude_2))
-    return intersection([cycloplane(*point) for point in points])
+    cycloplanes = (
+        ICOSAHEDRON_NORTH_1
+        + ICOSAHEDRON_NORTH_2
+        + ICOSAHEDRON_SOUTH_1
+        + ICOSAHEDRON_SOUTH_2
+    )
+    return intersection(cycloplanes)
 
 
 def get_quasitetratwister():
