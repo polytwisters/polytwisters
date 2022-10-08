@@ -157,16 +157,12 @@ def get_icosatwister():
 
 
 def get_quasitetratwister():
-    south_pole = cycloplane(math.pi, 0)
-    others = [
-        cycloplane(math.pi - TETRAHEDRON_LATITUDE, i * 2 * math.pi / 3)
-        for i in range(3)
-    ]
+    others = TETRAHEDRON_NORTH
 
-    ring_1 = difference([intersection(others), south_pole])
+    ring_1 = difference([intersection(others), SOUTH_POLE])
     ring_2 = rotated_copies(
         difference([
-            intersection([south_pole, others[0], others[1]]), others[2]
+            intersection([SOUTH_POLE, others[0], others[1]]), others[2]
         ]),
         3
     )
@@ -180,19 +176,15 @@ def get_quasitetratwister():
 
 
 def get_bloated_tetratwister():
-    south_pole = cycloplane(math.pi, 0)
-    others = [
-        cycloplane(math.pi - TETRAHEDRON_LATITUDE, i * 2 * math.pi / 3)
-        for i in range(3)
-    ]
+    others = TETRAHEDRON_NORTH
 
     ring_1 = difference([
         intersection([others[0], others[1]]),
-        south_pole,
+        SOUTH_POLE,
         others[2],
     ])
     ring_2 = difference([
-        intersection([south_pole, others[0]]),
+        intersection([SOUTH_POLE, others[0]]),
         others[1],
         others[2],
     ])
@@ -209,21 +201,16 @@ def get_bloated_tetratwister():
 
 
 def get_quasicubetwister():
-    north_pole = cycloplane(0, 0)
-    equators = [
-        cycloplane(math.pi / 2, i * math.pi / 2)
-        for i in range(4)
-    ]
-    south_pole = cycloplane(math.pi, 0)
+    equators = CUBE_EQUATOR
 
     north_ring = difference([
-        intersection([north_pole, equators[0], equators[1]]),
-        intersection([south_pole, equators[2], equators[3]])
+        intersection([NORTH_POLE, equators[0], equators[1]]),
+        intersection([SOUTH_POLE, equators[2], equators[3]])
     ])
     
     south_ring = difference([
-        intersection([south_pole, equators[0], equators[1]]),
-        intersection([north_pole, equators[2], equators[3]])
+        intersection([SOUTH_POLE, equators[0], equators[1]]),
+        intersection([NORTH_POLE, equators[2], equators[3]])
     ])
 
     polytwister = {
@@ -238,18 +225,11 @@ def get_quasicubetwister():
 
 
 def get_bloated_cubetwister():
-    north_pole = cycloplane(0, 0)
-    equators = [
-        cycloplane(math.pi / 2, i * math.pi / 2)
-        for i in range(4)
-    ]
-    south_pole = cycloplane(math.pi, 0)
+    equators = CUBE_EQUATOR
 
-    parts = []
-
-    ring_1 = intersection([north_pole, equators[0]])
+    ring_1 = intersection([NORTH_POLE, equators[0]])
     ring_2 = intersection([equators[0], equators[1]])
-    ring_3 = intersection([equators[0], south_pole])
+    ring_3 = intersection([equators[0], SOUTH_POLE])
 
     polytwister = {
         "type": "root",
@@ -264,12 +244,8 @@ def get_bloated_cubetwister():
 
 
 def get_quasioctatwister():
-    north = [
-        cycloplane(OCTAHEDRON_LATITUDE, i * math.pi / 2) for i in range(4)
-    ]
-    south = [
-        cycloplane(math.pi - OCTAHEDRON_LATITUDE, i * math.pi / 2) for i in range(4)
-    ]
+    north = OCTAHEDRON_NORTH
+    south = OCTAHEDRON_SOUTH
 
     ring_1 = intersection(north)
     ring_2 = rotated_copies(
@@ -286,12 +262,8 @@ def get_quasioctatwister():
 
 
 def get_bloated_octatwister():
-    north = [
-        cycloplane(OCTAHEDRON_LATITUDE, i * math.pi / 2) for i in range(4)
-    ]
-    south = [
-        cycloplane(math.pi - OCTAHEDRON_LATITUDE, i * math.pi / 2) for i in range(4)
-    ]
+    north = OCTAHEDRON_NORTH
+    south = OCTAHEDRON_SOUTH
 
     ring_1 = intersection([north[0], north[1]])
     ring_2 = intersection([north[0], south[0]])
