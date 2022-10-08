@@ -6,6 +6,6 @@ Polytwisters are strange curved four-dimensional shapes discovered by Jonathan B
 
 Assuming Blender is in your PATH:
 
-    blender --python polytwisters.py
+    blender --python polytwisters_blender.py
 
 On macOS, alias `/Applications/Blender.app/Contents/MacOS/Blender` to `blender` before running the above.
