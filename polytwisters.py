@@ -18,6 +18,31 @@ def get_3d_angle(a, b, c):
     # Law of cosines: b^2 = a^2 + c^2 - 2 a c cos(theta)
     return math.acos((a_2 + c_2 - b_2) / (2 * math.sqrt(a_2 * c_2)))
 
+# Let A and B be two vertices of a regular tetrahedron centered at C.
+# This is the angle ACB.
+# On https://en.wikipedia.org/wiki/Tetrahedron#Regular_tetrahedron
+# this is the "Vertex-Center-Vertex angle."
+TETRAHEDRON_LATITUDE = get_3d_angle((1, 1, 1), (0, 0, 0), (1, -1, -1))
+
+# Let A be a vertex of a regular octahedron centered at C and let B be
+# the center of an adjacent face. This is the angle ACB.
+OCTAHEDRON_LATITUDE = get_3d_angle((1, 0, 0), (0, 0, 0), (1, 1, 1))
+
+# Let A and B be the centers of two adjacent faces of a regular
+# dodecahedron centered at C. This is the angle ACB.
+# Equivalently, A and B are two adjacent vertices of a regular
+# icosahedron centered at C. We are using the standard definition of
+# icosahedron coordinates.
+DODECAHEDRON_LATITUDE = get_3d_angle((0, 1, PHI), (0, 0, 0), (0, -1, PHI))
+
+# Let A be the center of a face of a regular icosahedron centered at C,
+# and let B be one of the three closest vertices. This is the angle ACB.
+ICOSAHEDRON_LATITUDE_1 = get_3d_angle((1, 1, 1), (0, 0, 0), (0, 1, PHI))
+
+# Same as above, but B is now one of the three second closest vertices
+# to A.
+ICOSAHEDRON_LATITUDE_2 = get_3d_angle((1, 1, 1), (0, 0, 0), (0, -1, PHI))
+
 
 def cycloplane(latitude, longitude):
     """Shortcut function for the cycloplane node type."""
@@ -44,12 +69,6 @@ def get_dyadic_twister(n):
         cycloplane(math.pi / 2, i * 2 * math.pi / n) for i in range(n)
     ])
 
-# Let A and B be two vertices of a regular tetrahedron centered at C.
-# This is the angle ACB.
-# On https://en.wikipedia.org/wiki/Tetrahedron#Regular_tetrahedron
-# this is the "Vertex-Center-Vertex angle."
-TETRAHEDRON_LATITUDE = get_3d_angle((1, 1, 1), (0, 0, 0), (1, -1, -1))
-
 def get_tetratwister():
     points = []
     points.append((math.pi, 0))
@@ -66,23 +85,12 @@ def get_cubetwister():
         points.append((math.pi / 2, i * math.pi / 2))
     return intersection([cycloplane(*point) for point in points])
 
-# Let A be a vertex of a regular octahedron centered at C and let B be
-# the center of an adjacent face. This is the angle ACB.
-OCTAHEDRON_LATITUDE = get_3d_angle((1, 0, 0), (0, 0, 0), (1, 1, 1))
-
 def get_octatwister():
     points = []
     for i in range(4):
         points.append((OCTAHEDRON_LATITUDE, i * math.pi / 2))
         points.append((math.pi - OCTAHEDRON_LATITUDE, i * math.pi / 2))
     return intersection([cycloplane(*point) for point in points])
-
-# Let A and B be the centers of two adjacent faces of a regular
-# dodecahedron centered at C. This is the angle ACB.
-# Equivalently, A and B are two adjacent vertices of a regular
-# icosahedron centered at C. We are using the standard definition of
-# icosahedron coordinates.
-DODECAHEDRON_LATITUDE = get_3d_angle((0, 1, PHI), (0, 0, 0), (0, -1, PHI))
 
 def get_dodecatwister():
     points = []
@@ -92,15 +100,6 @@ def get_dodecatwister():
         points.append((DODECAHEDRON_LATITUDE, j * 2 * math.pi / 5))
         points.append((math.pi - DODECAHEDRON_LATITUDE, (j + 1 / 2) * 2 * math.pi / 5))
     return intersection([cycloplane(*point) for point in points])
-
-
-# Let A be the center of a face of a regular icosahedron centered at C,
-# and let B be one of the three closest vertices. This is the angle ACB.
-ICOSAHEDRON_LATITUDE_1 = get_3d_angle((1, 1, 1), (0, 0, 0), (0, 1, PHI))
-
-# Same as above, but B is now one of the three second closest vertices
-# to A.
-ICOSAHEDRON_LATITUDE_2 = get_3d_angle((1, 1, 1), (0, 0, 0), (0, -1, PHI))
 
 
 def get_icosatwister():
@@ -223,9 +222,12 @@ def get_bloated_cubetwister():
 
 
 def get_quasioctatwister():
-    latitude = get_3d_angle((1, 0, 0), (0, 0, 0), (1, 1, 1))
-    north = [cycloplane(latitude, i * math.pi / 2) for i in range(4)]
-    south = [cycloplane(math.pi - latitude, i * math.pi / 2) for i in range(4)]
+    north = [
+        cycloplane(OCTAHEDRON_LATITUDE, i * math.pi / 2) for i in range(4)
+    ]
+    south = [
+        cycloplane(math.pi - OCTAHEDRON_LATITUDE, i * math.pi / 2) for i in range(4)
+    ]
 
     ring_1 = intersection(north)
     ring_2 = rotated_copies(
@@ -242,9 +244,12 @@ def get_quasioctatwister():
 
 
 def get_bloated_octatwister():
-    latitude = get_3d_angle((1, 0, 0), (0, 0, 0), (1, 1, 1))
-    north = [cycloplane(latitude, i * math.pi / 2) for i in range(4)]
-    south = [cycloplane(math.pi - latitude, i * math.pi / 2) for i in range(4)]
+    north = [
+        cycloplane(OCTAHEDRON_LATITUDE, i * math.pi / 2) for i in range(4)
+    ]
+    south = [
+        cycloplane(math.pi - OCTAHEDRON_LATITUDE, i * math.pi / 2) for i in range(4)
+    ]
 
     ring_1 = intersection([north[0], north[1]])
     ring_2 = intersection([north[0], south[0]])
