@@ -59,15 +59,14 @@ def difference(nodes):
     return {"type": "difference", "operands": nodes}
 
 
+def union(nodes):
+    """Shortcut function for the union node type."""
+    return {"type": "union", "operands": nodes}
+
+
 def rotated_copies(node, order):
     """Shortcut function the rotated_copies node type."""
     return {"type": "rotated_copies", "order": order, "operand": node}
-
-
-def get_dyadic_twister(n):
-    return intersection([
-        cycloplane(math.pi / 2, i * 2 * math.pi / n) for i in range(n)
-    ])
 
 
 NORTH_POLE = cycloplane(0, 0)
@@ -126,24 +125,46 @@ for i in range(5):
         cycloplane(math.pi - ICOSAHEDRON_LATITUDE_2, longitude_2)
     )
 
+
+def get_dyadic_twister(n):
+    return {
+        "names": [f"order-{n} dyadic twister"],
+        "tree": intersection([
+            cycloplane(math.pi / 2, i * 2 * math.pi / n) for i in range(n)
+        ])
+    }
+
+
 def get_tetratwister():
     cycloplanes = [SOUTH_POLE] + TETRAHEDRON_NORTH
-    return intersection(cycloplanes)
+    return {
+        "names": ["tetratwister"],
+        "tree": intersection(cycloplanes)
+    }
 
 
 def get_cubetwister():
     cycloplanes = [NORTH_POLE, SOUTH_POLE] + CUBE_EQUATOR
-    return intersection(cycloplanes)
+    return {
+        "names": ["cubetwister"],
+        "tree": intersection(cycloplanes)
+    }
 
 
 def get_octatwister():
     cycloplanes = OCTAHEDRON_NORTH + OCTAHEDRON_SOUTH
-    return intersection(cycloplanes)
+    return {
+        "names": ["octatwister"],
+        "tree": intersection(cycloplanes)
+    }
 
 
 def get_dodecatwister():
     cycloplanes = [NORTH_POLE, SOUTH_POLE] + DODECAHEDRON_NORTH + DODECAHEDRON_SOUTH
-    return intersection(cycloplanes)
+    return {
+        "names": ["dodecatwister"],
+        "tree": intersection(cycloplanes)
+    }
 
 
 def get_icosatwister():
@@ -153,7 +174,10 @@ def get_icosatwister():
         + ICOSAHEDRON_SOUTH_1
         + ICOSAHEDRON_SOUTH_2
     )
-    return intersection(cycloplanes)
+    return {
+        "names": ["icosatwister"],
+        "tree": intersection(cycloplanes)
+    }
 
 
 def get_quasitetratwister():
@@ -168,8 +192,8 @@ def get_quasitetratwister():
     )
 
     polytwister = {
-        "type": "root",
-        "parts": [ring_1, ring_2]
+        "names": ["quasitetratwister"],
+        "tree": union([ring_1, ring_2])
     }
 
     return polytwister
@@ -190,11 +214,11 @@ def get_bloated_tetratwister():
     ])
 
     polytwister = {
-        "type": "root",
-        "parts": [
+        "names": ["bloated tetratwister", "inverted tetratwister"],
+        "tree": union([
             rotated_copies(ring_1, 3),
             rotated_copies(ring_2, 3),
-        ]
+        ])
     }
 
     return polytwister
@@ -214,11 +238,11 @@ def get_quasicubetwister():
     ])
 
     polytwister = {
-        "type": "root",
-        "parts": [
+        "names": ["quasicubetwister"],
+        "tree": union([
             rotated_copies(north_ring, 4),
             rotated_copies(south_ring, 4),
-        ],
+        ]),
     }
 
     return polytwister
@@ -232,12 +256,12 @@ def get_bloated_cubetwister():
     ring_3 = intersection([equators[0], SOUTH_POLE])
 
     polytwister = {
-        "type": "root",
-        "parts": [
+        "names": ["bloated cubetwister", "inverted cubetwister"],
+        "tree": union([
             rotated_copies(ring_1, 4),
             rotated_copies(ring_2, 4),
             rotated_copies(ring_3, 4),
-        ],
+        ]),
     }
 
     return polytwister
@@ -254,8 +278,8 @@ def get_quasioctatwister():
     ring_3 = intersection(south)
 
     polytwister = {
-        "type": "root",
-        "parts": [ring_1, ring_2, ring_3],
+        "names": ["quasioctatwister"],
+        "tree": union([ring_1, ring_2, ring_3]),
     }
 
     return polytwister
@@ -270,12 +294,12 @@ def get_bloated_octatwister():
     ring_3 = intersection([south[0], south[1]])
 
     polytwister = {
-        "type": "root",
-        "parts": [
+        "names": ["bloated octatwister", "inverted octatwister"],
+        "tree": union([
             rotated_copies(ring_1, 4),
             rotated_copies(ring_2, 4),
             rotated_copies(ring_3, 4),
-        ],
+        ]),
     }
 
     return polytwister
@@ -291,13 +315,13 @@ def get_quasidodecatwister():
     ring_4 = intersection([SOUTH_POLE, south[0], south[1]])
 
     polytwister = {
-        "type": "root",
-        "parts": [
+        "names": ["quasidodecatwister"],
+        "tree": union([
             rotated_copies(ring_1, 5),
             rotated_copies(ring_2, 5),
             rotated_copies(ring_3, 5),
             rotated_copies(ring_4, 5),
-        ],
+        ]),
     }
 
     return polytwister

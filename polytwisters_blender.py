@@ -156,44 +156,59 @@ class _Realizer:
     def __init__(self, z):
         self.z = z
 
-    def realize(self, node):
+    def realize(self, polytwister):
+        self.traverse_root(polytwister["tree"])
+
+    def traverse_root(self, node):
         type_ = node["type"]
-        if type_ == "root":
-            parts = []
-            for child in node["parts"]:
-                part = self.realize(child)
-                if isinstance(part, list):
-                    parts.extend(part)
+        # If the root node is a union, save some computation time by grouping the
+        # operands under an empty rather than computing the actual union.
+        if type_ == "union":
+            operands = []
+            for node in node["operands"]:
+                child = self.traverse(node)
+                if isinstance(child, list):
+                    operands.extend(child)
                 else:
-                    parts.append(part)
-            return group_under_empty(parts)
-        elif type_ == "cycloplane":
+                    operands.append(child)
+            return group_under_empty(operands)
+        return self.traverse(node)
+
+    def traverse(self, node):
+        type_ = node["type"]
+        if type_ == "cycloplane":
             create_cycloplane(
                 self.z, node["latitude"], node["longitude"]
             )
             return bpy.context.object
         elif type_ == "rotated_copies":
-            first = self.realize(node["operand"])
+            first = self.traverse(node["operand"])
             return [first] + make_rotated_copies(node["order"])
         elif type_ == "intersection":
             operands = []
             for child in node["operands"]:
-                operand = self.realize(child)
+                operand = self.traverse(child)
                 operands.append(operand)
             return do_boolean("INTERSECT", operands)
         elif type_ == "difference":
             operands = []
             for child in node["operands"]:
-                operand = self.realize(child)
+                operand = self.traverse(child)
                 operands.append(operand)
             return do_boolean("DIFFERENCE", operands)
+        elif type_ == "union":
+            operands = []
+            for child in node["operands"]:
+                operand = self.traverse(child)
+                operands.append(operand)
+            return do_boolean("UNION", operands)
         else:
             raise ValueError(f'Invalid node type {type_}')
 
 
-def realize(node, z):
+def realize(polytwister, z):
     realizer = _Realizer(z)
-    return realizer.realize(node)
+    return realizer.realize(polytwister)
 
 
 def create_convex_regular_polytwisters(z, spacing=2.5, translate_z=1):
@@ -223,6 +238,8 @@ def create_convex_regular_polytwisters(z, spacing=2.5, translate_z=1):
 
 
 if __name__ == "__main__":
+    import argparse
+
     expected_version = (3, 2)
     major, minor, patch = bpy.app.version
     if (major, minor) != expected_version:
