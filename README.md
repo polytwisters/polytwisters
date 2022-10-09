@@ -4,10 +4,12 @@ Polytwisters are strange curved four-dimensional shapes discovered by Jonathan B
 
 ## Running the script
 
-Assuming Blender is in your PATH:
+Currently this script renders a demo animation of the quasioctatwister. Run the following:
 
-    blender --python polytwisters_blender.py -- all 0.14
+    python3 main.py
 
-On macOS, alias `/Applications/Blender.app/Contents/MacOS/Blender` to `blender` before running the above.
+Currently, rendering this animation takes about an hour. To compile the frames into a video at `out.mp4`:
 
-The first argument after `--` is the name of the polytwister. The name must be in lowercase and either underscores or spaces may separate the words, such as `bloated_cubetwister`. Use `all` to render all polytwisters that have been ported. The second argument determines the coordinate of the cross section.
+    python3 make_video.py
+
+You may run `make_video.py` DURING the execution of the `main.py` script to see all frames so far. `main.py` renders frames out of order so that the resolution of the animation gradually increases.

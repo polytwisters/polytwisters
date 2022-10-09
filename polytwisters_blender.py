@@ -112,17 +112,20 @@ def _create_south_pole_cycloplane(z):
     """Create the cross section of a cycloplane whose point is located at the
     south pole."""
     deselect_all()
-    bpy.ops.mesh.primitive_cylinder_add(
-        radius=LARGE,
-        depth=2 * math.sqrt(1 - z * z),
-        vertices=32,
-        location=(0, 0, 0),
-        scale=(1, 1, 1),
-    )
+    if z >= 1:
+        bpy.ops.object.empty_add(type="PLAIN_AXES")
+    else:
+        bpy.ops.mesh.primitive_cylinder_add(
+            radius=LARGE,
+            depth=2 * math.sqrt(1 - z * z),
+            vertices=32,
+            location=(0, 0, 0),
+            scale=(1, 1, 1),
+        )
 
-    # See comment in create_cycloplane.
-    rotate_about_axis("X", math.pi / 2)
-    
+        # See comment in create_cycloplane.
+        rotate_about_axis("X", math.pi / 2)
+        
     return bpy.context.object
 
 
