@@ -291,19 +291,6 @@ def set_up_camera_and_lights():
     bpy.context.scene.cycles.device = "GPU"
 
 
-def render():
-    for area in bpy.context.screen.areas:
-        if area.type == "IMAGE_EDITOR":
-            image_editor = area
-            break 
-    else:
-        raise RuntimeError("IMAGE_EDITOR area not found")
-
-    with bpy.context.temp_override(area=image_editor):
-        bpy.ops.render.render()
-        bpy.ops.image.save_as(filepath="render.png")
-
-
 if __name__ == "__main__":
     import argparse
 
@@ -351,5 +338,3 @@ if __name__ == "__main__":
         else:
             raise ValueError(f'Polytwister "polytwister_name" not found.')
         realize(polytwister, args.z, cylinder_resolution=args.resolution)
-
-    render()
