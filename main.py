@@ -1,9 +1,14 @@
 import math
 import os
 import pathlib
+import platform
 import subprocess
 
-BLENDER = "/Applications/Blender.app/Contents/MacOS/Blender"
+system = platform.system()
+if system == "Darwin":
+    BLENDER = "/Applications/Blender.app/Contents/MacOS/Blender"
+else:
+    BLENDER = "blender"
 BLENDER_SCRIPT = pathlib.Path(__file__).resolve().parent / "polytwisters_blender.py"
 
 def render_frame(args, file_name):
