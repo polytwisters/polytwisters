@@ -6,11 +6,11 @@ Polytwisters are strange curved four-dimensional shapes discovered by Jonathan B
 
 This has only been tested on macOS, but should also work on Linux. You must have Blender installed, and ffmpeg if you want to make a video.
 
-Currently this script renders a demo animation of the quasioctatwister. Run the following:
+Currently this script renders a demo animation. Run the following and wait a few hours:
 
     python3 main.py
 
-Currently, rendering this animation takes about an hour. To compile the frames into a video at `out.mp4`:
+To compile the frames into a video at `out.mp4`:
 
     python3 make_video.py
 
