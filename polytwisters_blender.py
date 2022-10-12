@@ -281,14 +281,28 @@ def set_up_camera_and_lights():
     )
     bpy.context.scene.camera = bpy.context.object
 
+    # Latitude and longitude are given in degrees, and here latitude is defined
+    # the standard way -- the angle from the equator.
     light_specs = [
-        {"location": (-10, 10, 10), "power": 500},
-        {"location": (10, -10, -10), "power": 200},
-        {"location": (10, -10, 5), "power": 500},
+        # Key light
+        {"latitude": 40, "longitude": -50, "power": 400},
+        # Fill light
+        {"latitude": 0, "longitude": 50, "power": 100},
+        # Back light
+        {"latitude": -20, "longitude": 180 + 45, "power": 400},
     ]
+    distance = 10.0
+
+    base_longitude = math.atan2(camera_location[1], camera_location[0])
 
     for light_spec in light_specs:
-        location = light_spec["location"]
+        latitude = math.radians(light_spec["latitude"])
+        longitude = base_longitude + math.radians(light_spec["longitude"])
+        location = (
+            distance * math.cos(longitude) * math.cos(latitude),
+            distance * math.sin(longitude) * math.cos(latitude),
+            distance * math.sin(latitude),
+        )
         bpy.ops.object.light_add(
             type="AREA",
             radius=5,
