@@ -37,13 +37,14 @@ def render_animation(
     directory = pathlib.Path("out")
     os.makedirs(str(directory), exist_ok=True)
 
-    remaining_frames = list(range(num_frames))
+    remaining_frames = list(range(1, num_frames - 1))
     frame_order = []
 
     while len(remaining_frames) >= 2:
         frame_order = remaining_frames[0::2] + frame_order
         remaining_frames = remaining_frames[1::2]
     frame_order.extend(remaining_frames)
+    frame_order = [0, num_frames - 1] + frame_order
 
     num_digits = int(math.ceil(math.log10(num_frames)))
     frame_names = [f"frame{str(i).rjust(num_digits, '0')}.png" for i in range(num_frames)]
@@ -55,4 +56,9 @@ def render_animation(
 
 
 if __name__ == "__main__":
-    render_animation("quasioctatwister", 3.0, 100)
+    render_animation(
+        "bloated icosatwister",
+        max_z=8.0,
+        num_frames=100,
+        additional_args=["--scale", "0.4"],
+    )
