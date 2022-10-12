@@ -352,6 +352,29 @@ def get_bloated_dodecatwister():
 
     return polytwister
 
+
+def get_quasicosatwister():
+    north_1 = ICOSAHEDRON_NORTH_1
+    north_2 = ICOSAHEDRON_NORTH_2
+    south_2 = ICOSAHEDRON_SOUTH_2
+    south_1 = ICOSAHEDRON_SOUTH_1
+
+    ring_1 = intersection(ICOSAHEDRON_NORTH_1)
+    ring_2 = intersection([north_1[0], north_1[1], north_2[0], north_2[1], south_2[0]])
+    ring_3 = intersection([south_1[0], south_1[1], south_2[0], south_2[1], north_2[1]])
+    ring_4 = intersection(ICOSAHEDRON_SOUTH_1)
+
+    return {
+        "names": ["quasicosatwister"],
+        "tree": union([
+            ring_1,
+            rotated_copies(ring_2, 5),
+            rotated_copies(ring_3, 5),
+            ring_4,
+        ])
+    }
+
+
 ALL_POLYTWISTERS = [
     get_dyadic_twister(3),
     get_dyadic_twister(4),
@@ -371,4 +394,5 @@ ALL_POLYTWISTERS = [
     get_quasidodecatwister(),
     get_bloated_dodecatwister(),
     get_icosatwister(),
+    get_quasicosatwister(),
 ]
