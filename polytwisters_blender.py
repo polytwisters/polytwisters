@@ -20,6 +20,11 @@ def deselect_all():
     bpy.ops.object.select_all(action="DESELECT")
 
 
+def do_scale(amount):
+    bpy.ops.object.origin_set(type="ORIGIN_CURSOR")
+    bpy.ops.transform.resize(value=(amount, amount, amount))
+
+
 def rotate_about_axis(axis, angle):
     # See https://stackoverflow.com/a/67697363.
     for area in bpy.context.screen.areas:
@@ -168,12 +173,14 @@ def make_rotated_copies(n):
 
 class _Realizer:
 
-    def __init__(self, z, cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION):
+    def __init__(self, z, cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION, scale=1):
         self.z = z
         self.cylinder_resolution = cylinder_resolution
+        self.scale = scale
 
     def realize(self, polytwister):
         self.traverse_root(polytwister["tree"])
+        do_scale(self.scale)
         # Change the polytwister's axis of symmetry from Y to Z so it stands
         # upright in Blender, purely for aesthetic reasons.
         rotate_about_axis("X", math.pi / 2)
@@ -228,8 +235,8 @@ class _Realizer:
             raise ValueError(f'Invalid node type {type_}')
 
 
-def realize(polytwister, z, cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION):
-    realizer = _Realizer(z, cylinder_resolution=cylinder_resolution)
+def realize(polytwister, z, cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION, scale=1):
+    realizer = _Realizer(z, cylinder_resolution=cylinder_resolution, scale=scale)
     return realizer.realize(polytwister)
 
 
@@ -316,7 +323,7 @@ if __name__ == "__main__":
     parser.add_argument("polytwister")
     parser.add_argument("z", type=float)
     parser.add_argument("-r", "--resolution", type=int, default=DEFAULT_CYLINDER_RESOLUTION)
-    parser.add_argument("-s", "--spacing", type=float, default=5.0)
+    parser.add_argument("-s", "--scale", type=float, default=1)
 
     argv = sys.argv
     for i, argument in enumerate(argv):
@@ -330,9 +337,15 @@ if __name__ == "__main__":
     polytwister_name = args.polytwister
     polytwister_name = polytwister_name.replace("_", " ")
 
+    kwargs = {
+        "z": args.z,
+        "cylinder_resolution": args.resolution,
+        "scale": args.scale,
+    }
+
     if polytwister_name == "all":
         for i, polytwister in enumerate(polytwisters.ALL_POLYTWISTERS):
-            realize(polytwister, args.z, cylinder_resolution=args.resolution)
+            realize(polytwister, **kwargs)
             bpy.ops.transform.translate(value=(i * args.spacing, 0, 0))
     else:
         for polytwister in polytwisters.ALL_POLYTWISTERS:
@@ -340,4 +353,4 @@ if __name__ == "__main__":
                 break
         else:
             raise ValueError(f'Polytwister "polytwister_name" not found.')
-        realize(polytwister, args.z, cylinder_resolution=args.resolution)
+        realize(polytwister, **kwargs)
