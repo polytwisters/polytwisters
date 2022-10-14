@@ -399,6 +399,50 @@ def get_bloated_icosatwister():
     }
 
 
+def get_great_dodecatwister():
+    north = DODECAHEDRON_NORTH
+    south = DODECAHEDRON_SOUTH
+
+    rings = [
+        difference([
+            intersection([north[0], north[2]]),
+            union([NORTH_POLE, north[1]])
+        ]),
+        difference([
+            intersection([NORTH_POLE, south[0]]),
+            union([north[0], north[1]])
+        ]),
+        difference([
+            intersection([north[1], south[-1]]),
+            union([north[0], south[0]])
+        ]),
+        difference([
+            intersection([north[0], south[1]]),
+            union([north[1], south[0]])
+        ]),
+        difference([
+            intersection([SOUTH_POLE, north[1]]),
+            union([south[0], south[1]])
+        ]),
+        difference([
+            intersection([south[0], south[2]]),
+            union([SOUTH_POLE, south[1]])
+        ]),
+    ]
+
+    polytwister = {
+        "names": ["great dodecatwister"],
+        "tree": union([
+            rotated_copies(x, 5)
+            for x in rings
+        ]),
+    }
+
+    return polytwister
+
+
+
+
 ALL_POLYTWISTERS = [
     get_dyadic_twister(3),
     get_dyadic_twister(4),
@@ -420,4 +464,5 @@ ALL_POLYTWISTERS = [
     get_icosatwister(),
     get_quasicosatwister(),
     get_bloated_icosatwister(),
+    get_great_dodecatwister(),
 ]
