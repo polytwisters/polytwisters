@@ -379,7 +379,7 @@ if __name__ == "__main__":
             if polytwister_name in polytwister["names"]:
                 break
         else:
-            raise ValueError(f'Polytwister "polytwister_name" not found.')
+            raise ValueError(f'Polytwister "{polytwister_name}" not found.')
         realize(polytwister, **kwargs)
 
     if args.metadata_out is not None:
