@@ -87,5 +87,5 @@ if __name__ == "__main__":
         polytwister,
         max_z=max_z,
         num_frames=100,
-        additional_args=["--scale", str(5 * scale)],
+        additional_args=["--scale", str(5 * scale), "--resolution", "128"],
     )
