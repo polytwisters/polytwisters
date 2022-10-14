@@ -1,3 +1,4 @@
+import json
 import math
 import os
 import pathlib
@@ -11,21 +12,43 @@ else:
     BLENDER = "blender"
 BLENDER_SCRIPT = pathlib.Path(__file__).resolve().parent / "polytwisters_blender.py"
 
+
+def run_script(blender_args, script_args):
+    command = [BLENDER, "-b", "--python", str(BLENDER_SCRIPT)]
+    subprocess.run(command + blender_args + ["--"] + script_args, check=True)
+
+
 def render_frame(args, file_name):
     out_prefix = "out"
-    subprocess.run([
-        BLENDER,
-        "-b",
-        "--python",
-        str(BLENDER_SCRIPT),
-        "-o",
-        out_prefix,
-        "-f",
-        "1",
-        "--",
-    ] + args, check=True)
+    run_script(["-o", out_prefix, "-f", "1"], args)
     out_file = out_prefix + "0001.png"
     os.rename(out_file, file_name)
+
+
+def get_max_distance_from_origin(polytwister, z):
+    metadata_json = "metadata.json"
+    args = [polytwister, str(z), "--metadata-out", metadata_json]
+    run_script([], args)
+    with open(metadata_json) as f:
+        root = json.load(f)
+    return root["max_distance_from_origin"]
+
+
+def get_scale_and_max_z(polytwister):
+    max_distance_from_origin_zero = get_max_distance_from_origin(polytwister, 0.0)
+    scale = 1 / max_distance_from_origin_zero
+
+    max_z_lower_bound = 0
+    max_z_upper_bound = max_distance_from_origin_zero * 1.5
+
+    while max_z_upper_bound - max_z_lower_bound > 0.01:
+        max_z = (max_z_lower_bound + max_z_upper_bound) / 2
+        distance = get_max_distance_from_origin(polytwister, max_z)
+        if distance > 0:
+            max_z_lower_bound = max_z
+        else:
+            max_z_upper_bound = max_z
+    return scale, max_z_upper_bound
 
 
 def render_animation(
@@ -56,9 +79,13 @@ def render_animation(
 
 
 if __name__ == "__main__":
+    polytwister = "bloated icosatwister"
+
+    scale, max_z = get_scale_and_max_z(polytwister)
+
     render_animation(
-        "bloated icosatwister",
-        max_z=8.0,
+        polytwister,
+        max_z=max_z,
         num_frames=100,
-        additional_args=["--scale", "0.4"],
+        additional_args=["--scale", str(5 * scale)],
     )

@@ -240,6 +240,17 @@ def realize(polytwister, z, cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION, sca
     return realizer.realize(polytwister)
 
 
+def get_max_distance_from_origin():
+    result = 0.0
+    objects = [bpy.context.object] + list(bpy.context.object.children)
+    for object_ in objects:
+        if object_.data is None:
+            continue
+        for vertex in object_.data.vertices:
+            result = max(result, vertex.co.length)
+    return result
+
+
 def create_convex_regular_polytwisters(z, spacing=2.5, translate_z=1):
     platonic_solid_polytwisters = [
         polytwisters.get_tetratwister(),
@@ -317,6 +328,7 @@ def set_up_camera_and_lights():
 
 if __name__ == "__main__":
     import argparse
+    import json
 
     expected_version = (3, 2)
     major, minor, patch = bpy.app.version
@@ -338,6 +350,7 @@ if __name__ == "__main__":
     parser.add_argument("z", type=float)
     parser.add_argument("-r", "--resolution", type=int, default=DEFAULT_CYLINDER_RESOLUTION)
     parser.add_argument("-s", "--scale", type=float, default=1)
+    parser.add_argument("-m", "--metadata-out", type=str)
 
     argv = sys.argv
     for i, argument in enumerate(argv):
@@ -368,3 +381,11 @@ if __name__ == "__main__":
         else:
             raise ValueError(f'Polytwister "polytwister_name" not found.')
         realize(polytwister, **kwargs)
+
+    if args.metadata_out is not None:
+        with open(args.metadata_out, "w") as f:
+            max_distance_from_origin = get_max_distance_from_origin()
+            out_json = {
+                "max_distance_from_origin": max_distance_from_origin
+            }
+            json.dump(out_json, f)
