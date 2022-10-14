@@ -106,10 +106,6 @@ def create_cycloplane(
     rotate_about_axis("X", -theta)
     rotate_about_axis("Y", phi)
 
-    bpy.ops.object.shade_smooth()
-    bpy.context.object.data.use_auto_smooth = True
-    bpy.context.object.data.auto_smooth_angle = math.radians(30.0)
-
     return bpy.context.object
 
 
@@ -171,6 +167,12 @@ def make_rotated_copies(n):
     return copies
 
 
+def shade_smooth():
+    bpy.ops.object.shade_smooth()
+    bpy.context.object.data.use_auto_smooth = True
+    bpy.context.object.data.auto_smooth_angle = math.radians(30.0)
+
+
 class _Realizer:
 
     def __init__(self, z, cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION, scale=1):
@@ -179,7 +181,15 @@ class _Realizer:
         self.scale = scale
 
     def realize(self, polytwister):
-        self.traverse_root(polytwister["tree"])
+        parts = self.traverse_root(polytwister["tree"])
+
+        for part in parts:
+            deselect_all()
+            part.select_set(True)
+            bpy.context.view_layer.objects.active = part
+            shade_smooth()
+
+        group_under_empty(parts)
         do_scale(self.scale)
         # Change the polytwister's axis of symmetry from Y to Z so it stands
         # upright in Blender, purely for aesthetic reasons.
@@ -197,8 +207,8 @@ class _Realizer:
                     operands.extend(child)
                 else:
                     operands.append(child)
-            return group_under_empty(operands)
-        return self.traverse(node)
+            return operands
+        return [self.traverse(node)]
 
     def traverse(self, node):
         type_ = node["type"]
