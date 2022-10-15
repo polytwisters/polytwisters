@@ -439,10 +439,7 @@ def get_great_dodecatwister():
 
     polytwister = {
         "names": ["great dodecatwister"],
-        "tree": union([
-            rotated_copies(x, 5)
-            for x in rings
-        ]),
+        "tree": union([rotated_copies(x, 5) for x in rings]),
     }
 
     return polytwister
@@ -456,14 +453,24 @@ def get_great_quasidodecatwister():
 
     polytwister = {
         "names": ["great quasidodecatwister"],
-        "tree": union([
-            rotated_copies(x, 5)
-            for x in rings
-        ]),
+        "tree": union([rotated_copies(x, 5) for x in rings]),
     }
 
     return polytwister
 
+
+def get_great_bloated_dodecatwister():
+    rings = []
+    for edge, __ in get_great_dodecahedron_edges():
+        ring = intersection(edge)
+        rings.append(ring)
+
+    polytwister = {
+        "names": ["great bloated dodecatwister"],
+        "tree": union([rotated_copies(x, 5) for x in rings]),
+    }
+
+    return polytwister
 
 
 ALL_POLYTWISTERS = [
@@ -489,4 +496,5 @@ ALL_POLYTWISTERS = [
     get_bloated_icosatwister(),
     get_great_dodecatwister(),
     get_great_quasidodecatwister(),
+    get_great_bloated_dodecatwister(),
 ]
