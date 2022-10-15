@@ -6,12 +6,12 @@ Polytwisters are strange curved four-dimensional shapes discovered by Jonathan B
 
 This has only been tested on macOS, but should also work on Linux. You must have Blender installed, and ffmpeg if you want to make a video.
 
-Currently this script renders a demo animation. Run the following and wait a few hours:
+Run the following and wait a few hours:
 
-    python3 main.py
+    python3 main.py bloated_icosatwister
 
 To compile the frames into a video at `out.mp4`:
 
-    python3 make_video.py
+    python3 make_video.py out/bloated_icosatwister
 
-If you are impatient, you may run `make_video.py` DURING the execution of the `main.py` script to see all frames so far. `main.py` renders frames out of order so that the time resolution of the animation gradually increases.
+If you are impatient, you may run `make_video.py` during the execution of the `main.py` script to see all frames so far. `main.py` renders frames out of order so that the time resolution of the animation gradually increases.

@@ -1,6 +1,13 @@
+import argparse
 import subprocess
+import pathlib
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_option("directory")
+    args = parser.parse_args()
+    directory = pathlib.Path(args.directory)
+
     subprocess.run([
         "ffmpeg",
         "-framerate",
@@ -8,7 +15,7 @@ if __name__ == "__main__":
         "-pattern_type",
         "glob",
         "-i",
-        "out/*.png",
+        str(directory / "*.png"),
         "-c:v",
         "libx264",
         "-pix_fmt",
