@@ -1,3 +1,4 @@
+import argparse
 import json
 import math
 import os
@@ -5,6 +6,7 @@ import pathlib
 import platform
 import subprocess
 import sys
+import time
 
 system = platform.system()
 if system == "Darwin":
@@ -80,9 +82,6 @@ def render_animation(
 
 
 if __name__ == "__main__":
-    import time
-    import argparse
-
     parser = argparse.ArgumentParser()
     parser.add_argument("polytwister")
     args = parser.parse_args()

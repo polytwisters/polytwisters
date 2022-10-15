@@ -1,3 +1,5 @@
+import argparse
+import json
 import math
 import os
 import sys
@@ -352,9 +354,6 @@ def set_up_camera_and_lights():
 
 
 def main():
-    import argparse
-    import json
-
     expected_version = (3, 2)
     major, minor, patch = bpy.app.version
     if (major, minor) != expected_version:
