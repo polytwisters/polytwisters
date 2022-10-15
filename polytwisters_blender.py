@@ -300,6 +300,7 @@ def set_up_camera_and_lights():
         location=camera_location,
         rotation=rotation_to_point_to_origin(camera_location)
     )
+    camera = bpy.context.object
     bpy.context.scene.camera = bpy.context.object
 
     # Latitude and longitude are given in degrees, and here latitude is defined
@@ -331,6 +332,19 @@ def set_up_camera_and_lights():
             rotation=rotation_to_point_to_origin(location)
         )
         bpy.context.object.data.energy = light_spec["power"]
+
+    old_resolution = max([
+        bpy.context.scene.render.resolution_x,
+        bpy.context.scene.render.resolution_y,
+    ])
+
+    resolution = 1080
+    bpy.context.scene.render.resolution_x = resolution
+    bpy.context.scene.render.resolution_y = resolution
+
+    # Adjust the camera width to compensate for the change in resolution.
+    # See https://blender.stackexchange.com/a/105805/154615.
+    camera.data.sensor_width *= resolution / old_resolution
 
     bpy.context.scene.render.engine = "CYCLES"
     bpy.context.scene.cycles.device = "GPU"
