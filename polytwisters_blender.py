@@ -141,8 +141,6 @@ def do_boolean(operation, objects, delete=True):
     It is assumed that there are no other modifiers on the first object."""
     first = objects[0]
     for i, other in enumerate(objects[1:]):
-        index = i + 1
-
         deselect_all()
         first.select_set(True)
         bpy.context.view_layer.objects.active = first
