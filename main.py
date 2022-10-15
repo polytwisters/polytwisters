@@ -4,6 +4,7 @@ import os
 import pathlib
 import platform
 import subprocess
+import sys
 
 system = platform.system()
 if system == "Darwin":
@@ -57,7 +58,7 @@ def render_animation(
     num_frames,
     additional_args=(),
 ):
-    directory = pathlib.Path("out")
+    directory = pathlib.Path("out") / polytwister
     os.makedirs(str(directory), exist_ok=True)
 
     remaining_frames = list(range(1, num_frames - 1))
@@ -79,13 +80,30 @@ def render_animation(
 
 
 if __name__ == "__main__":
-    polytwister = "bloated icosatwister"
+    import time
+    import argparse
 
-    scale, max_z = get_scale_and_max_z(polytwister)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("polytwister")
+    args = parser.parse_args()
 
-    render_animation(
-        polytwister,
-        max_z=max_z,
-        num_frames=100,
-        additional_args=["--scale", str(5 * scale), "--resolution", "128"],
-    )
+    start_time = time.time()
+
+    try:
+        polytwister = args.polytwister
+        scale, max_z = get_scale_and_max_z(polytwister)
+
+        render_animation(
+            polytwister,
+            max_z=max_z,
+            num_frames=100,
+            additional_args=["--scale", str(5 * scale), "--resolution", "128"],
+        )
+    finally:
+        end_time = time.time()
+        duration_in_seconds = int(end_time - start_time)
+        duration_in_minutes, seconds = divmod(duration_in_seconds, 60)
+        hours, minutes = divmod(duration_in_minutes, 60)
+
+        duration_string = f"{hours}:{minutes:0>2}:{seconds:0>2}"
+        print(f"Took {duration_string}.", file=sys.stderr)

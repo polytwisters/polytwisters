@@ -1,6 +1,7 @@
 import math
 import os
 import sys
+import traceback
 import warnings
 
 import bpy
@@ -350,7 +351,7 @@ def set_up_camera_and_lights():
     bpy.context.scene.cycles.device = "GPU"
 
 
-if __name__ == "__main__":
+def main():
     import argparse
     import json
 
@@ -413,3 +414,11 @@ if __name__ == "__main__":
                 "max_distance_from_origin": max_distance_from_origin
             }
             json.dump(out_json, f)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception:
+        traceback.print_exc()
+        sys.exit(1)
