@@ -399,36 +399,43 @@ def get_bloated_icosatwister():
     }
 
 
-def get_great_dodecatwister():
+def get_great_dodecahedron_edges():
     north = DODECAHEDRON_NORTH
     south = DODECAHEDRON_SOUTH
 
-    rings = [
-        difference([
-            intersection([north[0], north[2]]),
-            union([NORTH_POLE, north[1]])
-        ]),
-        difference([
-            intersection([NORTH_POLE, south[0]]),
-            union([north[0], north[1]])
-        ]),
-        difference([
-            intersection([north[1], south[-1]]),
-            union([north[0], south[0]])
-        ]),
-        difference([
-            intersection([north[0], south[1]]),
-            union([north[1], south[0]])
-        ]),
-        difference([
-            intersection([SOUTH_POLE, north[1]]),
-            union([south[0], south[1]])
-        ]),
-        difference([
-            intersection([south[0], south[2]]),
-            union([SOUTH_POLE, south[1]])
-        ]),
+    return [
+        (
+            (north[0], north[2]),
+            (NORTH_POLE, north[1])
+        ),
+        (
+            (NORTH_POLE, south[0]),
+            (north[0], north[1])
+        ),
+        (
+            (north[1], south[-1]),
+            (north[0], south[0])
+        ),
+        (
+            (north[0], south[1]),
+            (north[1], south[0])
+        ),
+        (
+            (SOUTH_POLE, north[1]),
+            (south[0], south[1])
+        ),
+        (
+            (south[0], south[2]),
+            (SOUTH_POLE, south[1])
+        ),
     ]
+
+
+def get_great_dodecatwister():
+    rings = []
+    for edge_1, edge_2 in get_great_dodecahedron_edges():
+        ring = difference([intersection(edge_1), union(edge_2)])
+        rings.append(ring)
 
     polytwister = {
         "names": ["great dodecatwister"],
@@ -440,6 +447,22 @@ def get_great_dodecatwister():
 
     return polytwister
 
+
+def get_great_quasidodecatwister():
+    rings = []
+    for edge_1, edge_2 in get_great_dodecahedron_edges():
+        ring = difference([intersection(edge_1), intersection(edge_2)])
+        rings.append(ring)
+
+    polytwister = {
+        "names": ["great quasidodecatwister"],
+        "tree": union([
+            rotated_copies(x, 5)
+            for x in rings
+        ]),
+    }
+
+    return polytwister
 
 
 
@@ -465,4 +488,5 @@ ALL_POLYTWISTERS = [
     get_quasicosatwister(),
     get_bloated_icosatwister(),
     get_great_dodecatwister(),
+    get_great_quasidodecatwister(),
 ]
