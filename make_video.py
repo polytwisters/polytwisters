@@ -4,7 +4,7 @@ import pathlib
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_option("directory")
+    parser.add_argument("directory")
     args = parser.parse_args()
     directory = pathlib.Path(args.directory)
 
