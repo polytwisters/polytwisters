@@ -1,5 +1,6 @@
 import argparse
 import json
+import logging
 import math
 import os
 import pathlib
@@ -40,17 +41,31 @@ def get_max_distance_from_origin(polytwister, z):
 def get_scale_and_max_z(polytwister):
     max_distance_from_origin_zero = get_max_distance_from_origin(polytwister, 0.0)
     scale = 1 / max_distance_from_origin_zero
+    logging.debug(f"Max distance from origin at 0 = {max_distance_from_origin_zero:.2}")
+    logging.debug(f"Scale = {scale:.2}")
 
     max_z_lower_bound = 0
-    max_z_upper_bound = max_distance_from_origin_zero * 1.5
+    max_z_upper_bound = max_distance_from_origin_zero * 2
 
+    logging.debug("Performing grid search to find upper bound for max Z.")
+    while True:
+        logging.debug(f"Testing upper bound {max_z_upper_bound:.2}")
+        max_distance_from_origin = get_max_distance_from_origin(polytwister, max_z_upper_bound)
+        if max_distance_from_origin == 0:
+            break
+        max_z_upper_bound += 1
+    logging.debug(f"Grid search complete, upper bound = {max_z_upper_bound:.2}")
+
+    logging.debug(f"Performing bisection search.")
     while max_z_upper_bound - max_z_lower_bound > 0.01:
+        logging.debug(f"Search range = [{max_z_lower_bound:.2f}, {max_z_upper_bound:.2f}].")
         max_z = (max_z_lower_bound + max_z_upper_bound) / 2
         distance = get_max_distance_from_origin(polytwister, max_z)
         if distance > 0:
             max_z_lower_bound = max_z
         else:
             max_z_upper_bound = max_z
+    logging.debug(f"Bisection search complete. Max Z = f{max_z_upper_bound:.2f}")
     return scale, max_z_upper_bound
 
 
@@ -82,6 +97,8 @@ def render_animation(
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+
     parser = argparse.ArgumentParser()
     parser.add_argument("polytwister")
     args = parser.parse_args()
