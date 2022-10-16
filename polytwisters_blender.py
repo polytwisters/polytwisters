@@ -116,7 +116,7 @@ def _create_south_pole_cycloplane(z):
     """Create the cross section of a cycloplane whose point is located at the
     south pole."""
     deselect_all()
-    if z >= 1:
+    if abs(z) >= 1:
         # Hack to create an empty mesh, by creating a cylinder and deleting
         # all its vertices.
         bpy.ops.mesh.primitive_cylinder_add()
