@@ -65,7 +65,7 @@ def get_scale_and_max_z(polytwister):
             max_z_lower_bound = max_z
         else:
             max_z_upper_bound = max_z
-    logging.debug(f"Bisection search complete. Max Z = f{max_z_upper_bound:.2f}")
+    logging.debug(f"Bisection search complete. Max Z = {max_z_upper_bound:.2f}")
     return scale, max_z_upper_bound
 
 
@@ -113,7 +113,7 @@ if __name__ == "__main__":
             polytwister,
             max_z=max_z,
             num_frames=100,
-            additional_args=["--scale", str(5 * scale), "--resolution", "128"],
+            additional_args=["--scale", str(scale), "--resolution", "128"],
         )
     finally:
         end_time = time.time()

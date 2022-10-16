@@ -18,6 +18,9 @@ EPSILON = 1e-10
 LARGE = 10e3
 DEFAULT_CYLINDER_RESOLUTION = 64
 
+# Amount by which all polytwisters are scaled to fit nicely in frame.
+DEFAULT_SCALE = 2.0
+
 
 def deselect_all():
     bpy.ops.object.select_all(action="DESELECT")
@@ -196,7 +199,7 @@ class _Realizer:
             shade_smooth()
 
         group_under_empty(parts)
-        do_scale(self.scale)
+        do_scale(DEFAULT_SCALE * self.scale)
         # Change the polytwister's axis of symmetry from Y to Z so it stands
         # upright in Blender, purely for aesthetic reasons.
         rotate_about_axis("X", math.pi / 2)
