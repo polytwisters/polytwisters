@@ -117,7 +117,12 @@ def _create_south_pole_cycloplane(z):
     south pole."""
     deselect_all()
     if z >= 1:
-        bpy.ops.object.empty_add(type="PLAIN_AXES")
+        # Hack to create an empty mesh, by creating a cylinder and deleting
+        # all its vertices.
+        bpy.ops.mesh.primitive_cylinder_add()
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.mesh.delete(type="VERT")
+        bpy.ops.object.editmode_toggle()
     else:
         bpy.ops.mesh.primitive_cylinder_add(
             radius=LARGE,
@@ -129,7 +134,7 @@ def _create_south_pole_cycloplane(z):
 
         # See comment in create_cycloplane.
         rotate_about_axis("X", math.pi / 2)
-        
+
     return bpy.context.object
 
 
