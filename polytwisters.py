@@ -473,6 +473,47 @@ def get_great_bloated_dodecatwister():
     return polytwister
 
 
+def get_small_stellated_dodecahedron_spikes():
+    north = DODECAHEDRON_NORTH
+    south = DODECAHEDRON_SOUTH
+    
+    ring_1 = (north, NORTH_POLE)
+    ring_2 = (
+        [NORTH_POLE, north[-1], north[1], south[-1], south[0]],
+        north[0]
+    )
+    ring_3 = (
+        [SOUTH_POLE, south[-1], south[1], north[0], north[1]],
+        south[0]
+    )
+    ring_4 = (south, SOUTH_POLE)
+    
+    return {
+        "poles": [ring_1, ring_4],
+        "rest": [ring_2, ring_3],
+    }
+
+
+def get_small_stellated_dodecatwister():
+    parts = []
+    spikes = get_small_stellated_dodecahedron_spikes()
+    for spike in spikes["poles"]:
+        parts.append(
+            difference([intersection(spike[0]), spike[1]])
+        )
+    for spike in spikes["rest"]:
+        parts.append(
+            rotated_copies(difference([intersection(spike[0]), spike[1]]), 5)
+        )
+
+    polytwister = {
+        "names": ["small stellated dodecatwister"],
+        "tree": union(parts),
+    }
+
+    return polytwister
+
+
 ALL_POLYTWISTERS = [
     get_dyadic_twister(3),
     get_dyadic_twister(4),
@@ -497,4 +538,5 @@ ALL_POLYTWISTERS = [
     get_great_dodecatwister(),
     get_great_quasidodecatwister(),
     get_great_bloated_dodecatwister(),
+    get_small_stellated_dodecatwister(),
 ]
