@@ -355,8 +355,16 @@ def set_up_camera_and_lights():
     # See https://blender.stackexchange.com/a/105805/154615.
     camera.data.sensor_width *= resolution / old_resolution
 
+    # Use Cycles and hardware acceleration.
     bpy.context.scene.render.engine = "CYCLES"
     bpy.context.scene.cycles.device = "GPU"
+
+    # Improve contrast.
+    bpy.context.scene.view_settings.look = "High Contrast"
+
+    # Add some ambient occlusion.
+    bpy.context.scene.cycles.use_fast_gi = True
+    bpy.context.scene.world.light_settings.distance = 0.2
 
 
 def main():
