@@ -514,6 +514,26 @@ def get_small_stellated_dodecatwister():
     return polytwister
 
 
+def get_small_quasistellated_dodecatwister():
+    parts = []
+    spikes = get_small_stellated_dodecahedron_spikes()
+    for spike in spikes["poles"]:
+        parts.append(
+            intersection(spike[0])
+        )
+    for spike in spikes["rest"]:
+        parts.append(
+            rotated_copies(intersection(spike[0]), 5)
+        )
+
+    polytwister = {
+        "names": ["small quasistellated dodecatwister"],
+        "tree": union(parts),
+    }
+
+    return polytwister
+
+
 ALL_POLYTWISTERS = [
     get_dyadic_twister(3),
     get_dyadic_twister(4),
@@ -539,4 +559,5 @@ ALL_POLYTWISTERS = [
     get_great_quasidodecatwister(),
     get_great_bloated_dodecatwister(),
     get_small_stellated_dodecatwister(),
+    get_small_quasistellated_dodecatwister(),
 ]
