@@ -534,6 +534,27 @@ def get_small_quasistellated_dodecatwister():
     return polytwister
 
 
+def get_great_icosatwister():
+    north_1 = ICOSAHEDRON_NORTH_1
+    north_2 = ICOSAHEDRON_NORTH_2
+    south_2 = ICOSAHEDRON_SOUTH_2
+    south_1 = ICOSAHEDRON_SOUTH_1
+
+    rings = [
+        intersection([north_1[0], south_2[2], south_1[1], south_1[3]]),
+        intersection([north_2[0], north_2[2], north_2[3], south_1[2]]),
+        intersection([south_2[0], south_2[2], south_2[3], north_1[3]]),
+        intersection([south_1[0], north_2[3], north_1[2], north_1[4]]),
+    ]
+
+    polytwister = {
+        "names": ["great icosatwister"],
+        "tree": union([rotated_copies(x, 5) for x in rings]),
+    }
+
+    return polytwister
+
+
 ALL_POLYTWISTERS = [
     get_dyadic_twister(3),
     get_dyadic_twister(4),
@@ -560,4 +581,5 @@ ALL_POLYTWISTERS = [
     get_great_bloated_dodecatwister(),
     get_small_stellated_dodecatwister(),
     get_small_quasistellated_dodecatwister(),
+    get_great_icosatwister(),
 ]
