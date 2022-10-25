@@ -18,6 +18,7 @@ def get_3d_angle(a, b, c):
     # Law of cosines: b^2 = a^2 + c^2 - 2 a c cos(theta)
     return math.acos((a_2 + c_2 - b_2) / (2 * math.sqrt(a_2 * c_2)))
 
+
 # Let A and B be two vertices of a regular tetrahedron centered at C.
 # This is the angle ACB.
 # On https://en.wikipedia.org/wiki/Tetrahedron#Regular_tetrahedron
@@ -540,6 +541,13 @@ def get_great_icosatwister():
     south_2 = ICOSAHEDRON_SOUTH_2
     south_1 = ICOSAHEDRON_SOUTH_1
 
+    # The great icosahedron is constructed as a symmetrical union of 20 tetrahedra, each erected
+    # from faces of a core regular icosahedron. In particular, we take one face of the icosahedron
+    # along with the three faces that border the opposite face by one edge. Extend these faces
+    # into half-spaces and take their intersection to form one tetrahedron.
+    #
+    # In this case, due to symmetry, we only need to make four tetrahedra, then use 5-fold rotated
+    # copies.
     rings = [
         intersection([north_1[0], south_2[2], south_1[1], south_1[3]]),
         intersection([north_2[0], north_2[2], north_2[3], south_1[2]]),
