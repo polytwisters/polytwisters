@@ -114,6 +114,30 @@ def render_animation(
     num_frames,
     additional_args=(),
 ):
+    """Given a polytwister and its precomputed max W, render frames of
+    an animation by calling make_polytwister.py as a subprocess.
+    additional_args specifies command-line arguments to make_polytwister.py,
+    including the overall spatial scale of the meshes.
+
+    Blender has built-in features to render an animated video, but I
+    went with rendering frames individually so they could be rendered
+    out of order. Out-of-order rendering has two advantages: 1. I'm
+    impatient and want to see a lower-res animation before it completes,
+    2. issues can be caught early to avoid wasting hours of render time.
+
+    The rendering order is done with the following heuristically
+    determined algorithm. Start with N frames. Cross off every other
+    frame. Then go through the uncrossed frames and cross off every
+    other one of those. Repeat until there is only one frame left, then
+    cross it off. Now sort all the frames in order of when they were
+    crossed off, but backwards. This gives you an ordering of the frames
+    that roughly increases in resolution.
+
+    As a special exception, the first and last frames are rendered
+    first so they can be visually confirmed to be blank. If they
+    aren't blank then the max W is too small and the animation will
+    be cut off.
+    """
     directory = pathlib.Path("out") / polytwister
     os.makedirs(str(directory), exist_ok=True)
 
