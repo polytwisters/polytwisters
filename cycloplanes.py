@@ -11,10 +11,10 @@ def rotate_2d(x, y, theta):
     )
 
 
-def get_cycloplane_error(point, latitude, longitude, radius=1.0):
+def get_cycloplane_error(point, zenith, azimuth, radius=1.0):
     x, y, z, w = point
-    theta = latitude / 2
-    phi = longitude
+    theta = zenith / 2
+    phi = azimuth
     x, y = rotate_2d(x, y, -phi)
     z, w = rotate_2d(z, w, -phi)
     x, w = rotate_2d(x, w, -theta)
@@ -25,8 +25,8 @@ def get_cycloplane_error(point, latitude, longitude, radius=1.0):
 
 def get_summed_cycloplane_error(point, cycloplane_specs):
     return sum([
-        get_cycloplane_error(point, latitude, longitude)
-        for latitude, longitude in cycloplane_specs
+        get_cycloplane_error(point, zenith, azimuth)
+        for zenith, azimuth in cycloplane_specs
     ])
 
 

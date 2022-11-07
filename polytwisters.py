@@ -23,31 +23,31 @@ def get_3d_angle(a, b, c):
 # This is the angle ACB.
 # On https://en.wikipedia.org/wiki/Tetrahedron#Regular_tetrahedron
 # this is the "Vertex-Center-Vertex angle."
-TETRAHEDRON_LATITUDE = get_3d_angle((1, 1, 1), (0, 0, 0), (1, -1, -1))
+TETRAHEDRON_ZENITH = get_3d_angle((1, 1, 1), (0, 0, 0), (1, -1, -1))
 
 # Let A be a vertex of a regular octahedron centered at C and let B be
 # the center of an adjacent face. This is the angle ACB.
-OCTAHEDRON_LATITUDE = get_3d_angle((1, 0, 0), (0, 0, 0), (1, 1, 1))
+OCTAHEDRON_ZENITH = get_3d_angle((1, 0, 0), (0, 0, 0), (1, 1, 1))
 
 # Let A and B be the centers of two adjacent faces of a regular
 # dodecahedron centered at C. This is the angle ACB.
 # Equivalently, A and B are two adjacent vertices of a regular
 # icosahedron centered at C. We are using the standard definition of
 # icosahedron coordinates.
-DODECAHEDRON_LATITUDE = get_3d_angle((0, 1, PHI), (0, 0, 0), (0, -1, PHI))
+DODECAHEDRON_ZENITH = get_3d_angle((0, 1, PHI), (0, 0, 0), (0, -1, PHI))
 
 # Let A be the center of a face of a regular icosahedron centered at C,
 # and let B be one of the three closest vertices. This is the angle ACB.
-ICOSAHEDRON_LATITUDE_1 = get_3d_angle((1, 1, 1), (0, 0, 0), (0, 1, PHI))
+ICOSAHEDRON_ZENITH_1 = get_3d_angle((1, 1, 1), (0, 0, 0), (0, 1, PHI))
 
 # Same as above, but B is now one of the three second closest vertices
 # to A.
-ICOSAHEDRON_LATITUDE_2 = get_3d_angle((1, 1, 1), (0, 0, 0), (0, -1, PHI))
+ICOSAHEDRON_ZENITH_2 = get_3d_angle((1, 1, 1), (0, 0, 0), (0, -1, PHI))
 
 
-def cycloplane(latitude, longitude):
+def cycloplane(zenith, azimuth):
     """Shortcut function for the cycloplane node type."""
-    return {"type": "cycloplane", "latitude": latitude, "longitude": longitude}
+    return {"type": "cycloplane", "zenith": zenith, "azimuth": azimuth}
 
 
 def intersection(nodes):
@@ -77,7 +77,7 @@ SOUTH_POLE = cycloplane(math.pi, 0)
 TETRAHEDRON_NORTH = []
 for i in range(3):
     TETRAHEDRON_NORTH.append(
-        cycloplane(math.pi - TETRAHEDRON_LATITUDE, i * 2 * math.pi / 3)
+        cycloplane(math.pi - TETRAHEDRON_ZENITH, i * 2 * math.pi / 3)
     )
 
 CUBE_EQUATOR = []
@@ -89,10 +89,10 @@ OCTAHEDRON_NORTH = []
 OCTAHEDRON_SOUTH = []
 for i in range(4):
     OCTAHEDRON_NORTH.append(
-        cycloplane(OCTAHEDRON_LATITUDE, i * math.pi / 2)
+        cycloplane(OCTAHEDRON_ZENITH, i * math.pi / 2)
     )
     OCTAHEDRON_SOUTH.append(
-        cycloplane(math.pi - OCTAHEDRON_LATITUDE, i * math.pi / 2)
+        cycloplane(math.pi - OCTAHEDRON_ZENITH, i * math.pi / 2)
     )
 
 
@@ -100,10 +100,10 @@ DODECAHEDRON_NORTH = []
 DODECAHEDRON_SOUTH = []
 for i in range(5):
     DODECAHEDRON_NORTH.append(
-        cycloplane(DODECAHEDRON_LATITUDE, i * 2 * math.pi / 5)
+        cycloplane(DODECAHEDRON_ZENITH, i * 2 * math.pi / 5)
     )
     DODECAHEDRON_SOUTH.append(
-        cycloplane(math.pi - DODECAHEDRON_LATITUDE, (i + 1 / 2) * 2 * math.pi / 5)
+        cycloplane(math.pi - DODECAHEDRON_ZENITH, (i + 1 / 2) * 2 * math.pi / 5)
     )
 
 ICOSAHEDRON_NORTH_1 = []
@@ -111,19 +111,19 @@ ICOSAHEDRON_NORTH_2 = []
 ICOSAHEDRON_SOUTH_1 = []
 ICOSAHEDRON_SOUTH_2 = []
 for i in range(5):
-    longitude_1 = i * 2 * math.pi / 5
-    longitude_2 = (i + 1 / 2) * 2 * math.pi / 5
+    azimuth_1 = i * 2 * math.pi / 5
+    azimuth_2 = (i + 1 / 2) * 2 * math.pi / 5
     ICOSAHEDRON_NORTH_1.append(
-        cycloplane(ICOSAHEDRON_LATITUDE_1, longitude_1)
+        cycloplane(ICOSAHEDRON_ZENITH_1, azimuth_1)
     )
     ICOSAHEDRON_NORTH_2.append(
-        cycloplane(ICOSAHEDRON_LATITUDE_2, longitude_1)
+        cycloplane(ICOSAHEDRON_ZENITH_2, azimuth_1)
     )
     ICOSAHEDRON_SOUTH_1.append(
-        cycloplane(math.pi - ICOSAHEDRON_LATITUDE_1, longitude_2)
+        cycloplane(math.pi - ICOSAHEDRON_ZENITH_1, azimuth_2)
     )
     ICOSAHEDRON_SOUTH_2.append(
-        cycloplane(math.pi - ICOSAHEDRON_LATITUDE_2, longitude_2)
+        cycloplane(math.pi - ICOSAHEDRON_ZENITH_2, azimuth_2)
     )
 
 

@@ -63,28 +63,25 @@ def group_under_empty(parts):
 
 
 def create_cycloplane(
-    z,
-    latitude,
-    longitude,
+    w,
+    zenith,
+    azimuth,
     cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION,
 ):
     """Create a cross section of a cycloplane constructed from a Hopf fiber.
-    z is the cross section coordinate, latitude and longitude are the
-    coordinates of the point on the sphere. Said point is transformed via the
-    preimage of the Hopf fibration into a unit circle, then the cycloplane is
-    constructed from that unit circle.
+    w is the cross section coordinate, zenith is the angle from the north pole,
+    and azimuth is another word for longitude. Said point is transformed via
+    the preimage of the Hopf fibration into a unit circle, then the cycloplane
+    is constructed from that unit circle.
 
-    Note that latitude is defined differently from normal -- it is the angle
-    from the north pole, not the angle from the equator.
+    See "cylli" macro in Bowers' original code.
+    """
 
-    See "cylli" macro in Bowers' original code."""
-
-    # Reason for division by 2 currently unclear, sorry.
-    theta = latitude / 2
-    phi = longitude
+    theta = zenith / 2
+    phi = azimuth
 
     if abs(theta - math.pi / 2) < EPSILON:
-        return _create_south_pole_cycloplane(z)
+        return _create_south_pole_cycloplane(w)
 
     deselect_all()
     bpy.ops.mesh.primitive_cylinder_add(
@@ -102,7 +99,7 @@ def create_cycloplane(
 
     scale_x = 1 / math.cos(theta)
     bpy.ops.transform.resize(value=(scale_x, 1, 1))
-    translate_x = z * math.tan(theta)
+    translate_x = w * math.tan(theta)
     bpy.ops.transform.translate(value=(translate_x, 0, 0))
 
     # In Bowers' code this rotation about the X-axis comes before the
@@ -115,11 +112,11 @@ def create_cycloplane(
     return bpy.context.object
 
 
-def _create_south_pole_cycloplane(z):
+def _create_south_pole_cycloplane(w):
     """Create the cross section of a cycloplane whose point is located at the
     south pole."""
     deselect_all()
-    if abs(z) >= 1:
+    if abs(w) >= 1:
         # Hack to create an empty mesh, by creating a cylinder and deleting
         # all its vertices.
         bpy.ops.mesh.primitive_cylinder_add()
@@ -129,7 +126,7 @@ def _create_south_pole_cycloplane(z):
     else:
         bpy.ops.mesh.primitive_cylinder_add(
             radius=LARGE,
-            depth=2 * math.sqrt(1 - z * z),
+            depth=2 * math.sqrt(1 - w * w),
             vertices=32,
             location=(0, 0, 0),
             scale=(1, 1, 1),
@@ -184,8 +181,8 @@ def shade_smooth():
 
 class _Realizer:
 
-    def __init__(self, z, cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION, scale=1):
-        self.z = z
+    def __init__(self, w, cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION, scale=1):
+        self.w = w
         self.cylinder_resolution = cylinder_resolution
         self.scale = scale
 
@@ -223,9 +220,9 @@ class _Realizer:
         type_ = node["type"]
         if type_ == "cycloplane":
             create_cycloplane(
-                self.z,
-                node["latitude"],
-                node["longitude"],
+                self.w,
+                node["zenith"],
+                node["azimuth"],
                 cylinder_resolution=self.cylinder_resolution,
             )
             return bpy.context.object
@@ -254,8 +251,8 @@ class _Realizer:
             raise ValueError(f'Invalid node type {type_}')
 
 
-def realize(polytwister, z, cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION, scale=1):
-    realizer = _Realizer(z, cylinder_resolution=cylinder_resolution, scale=scale)
+def realize(polytwister, w, cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION, scale=1):
+    realizer = _Realizer(w, cylinder_resolution=cylinder_resolution, scale=scale)
     return realizer.realize(polytwister)
 
 
@@ -270,7 +267,7 @@ def get_max_distance_from_origin():
     return result
 
 
-def create_convex_regular_polytwisters(z, spacing=2.5, translate_z=1):
+def create_convex_regular_polytwisters(w, spacing=2.5, translate_z=1):
     platonic_solid_polytwisters = [
         polytwisters.get_tetratwister(),
         polytwisters.get_cubetwister(),
@@ -284,11 +281,11 @@ def create_convex_regular_polytwisters(z, spacing=2.5, translate_z=1):
     ]
 
     for i, polytwister in enumerate(platonic_solid_polytwisters):
-        realize(polytwister, z=z)
+        realize(polytwister, w=w)
         bpy.ops.transform.translate(value=(i * spacing, 0, translate_z))
 
     for i, polytwister in enumerate(dyadic_twisters):
-        realize(polytwister, z=z)
+        realize(polytwister, w=w)
         bpy.ops.transform.translate(
             value=(i * spacing, 0, translate_z + spacing)
         )
@@ -303,8 +300,45 @@ def rotation_to_point_to_origin(point):
     return rotation_quaternion.to_euler()
 
 
-def set_up_camera_and_lights():
-    camera_location = (10, 10, 3)
+def convert_spherical_to_cartesian(radius, latitude, longitude):
+    """Convert radius, latitude, and longitude to Cartesian coordinates.
+    Angles are in radians. The north pole/south pole axis is the Z axis,
+    which looks vertical by default in Blender.
+
+    Note the use of latitude (signed angle from equator) rather than
+    zenith angle (angle from the north pole).
+    """
+    return (
+        radius * math.cos(longitude) * math.cos(latitude),
+        radius * math.sin(longitude) * math.cos(latitude),
+        radius * math.sin(latitude),
+    )
+
+
+def set_up_for_render():
+    """This function does the following:
+    - Add a camera object and set it to the primary camera of the scene.
+    - Add lighting.
+    - Add ambient occlusion.
+    - Ensure the scene renders a square 1080x1080 image.
+    - Set the engine to Cycles and the device to the GPU.
+    - Set "Look" in Render -> Color Management to High Contrast.
+
+    When adjusting lighting and rendering, we are aiming for a decently
+    photographic look with good depth perception but without distracting
+    from the polytwister's shape. For this reason, we are using big area
+    lights for soft shadows. Hard shadows can give the impression of features
+    that aren't really there. However, dark areas are not themselves bad --
+    insufficient contrast can inhibit depth perception and lead to an
+    unattractive, washed-out appearance. I am told by my YouTube education
+    that inadequate shadows is a common beginner mistake.
+    """
+    camera_distance = 14.5
+    camera_latitude = math.radians(10)
+    camera_longitude = math.radians(45)
+    camera_location = convert_spherical_to_cartesian(
+        camera_distance, camera_latitude, camera_longitude
+    )
     bpy.ops.object.camera_add(
         location=camera_location,
         rotation=rotation_to_point_to_origin(camera_location)
@@ -312,8 +346,11 @@ def set_up_camera_and_lights():
     camera = bpy.context.object
     bpy.context.scene.camera = bpy.context.object
 
-    # Latitude and longitude are given in degrees, and here latitude is defined
-    # the standard way -- the angle from the equator.
+    # Latitude and longitude are given in degrees for readability.
+    # Longitudes are relative to the camera: a longitude of 0 degrees
+    # is directly behind the camera, 90 degrees is directly from the
+    # right, -90 degrees is directly from the left. Latitudes are
+    # absolute.
     light_specs = [
         # Key light
         {"latitude": 40, "longitude": -50, "power": 400},
@@ -324,15 +361,11 @@ def set_up_camera_and_lights():
     ]
     distance = 10.0
 
-    base_longitude = math.atan2(camera_location[1], camera_location[0])
-
     for light_spec in light_specs:
         latitude = math.radians(light_spec["latitude"])
-        longitude = base_longitude + math.radians(light_spec["longitude"])
-        location = (
-            distance * math.cos(longitude) * math.cos(latitude),
-            distance * math.sin(longitude) * math.cos(latitude),
-            distance * math.sin(latitude),
+        longitude = camera_longitude + math.radians(light_spec["longitude"])
+        location = convert_spherical_to_cartesian(
+            distance, latitude, longitude
         )
         bpy.ops.object.light_add(
             type="AREA",
@@ -342,11 +375,15 @@ def set_up_camera_and_lights():
         )
         bpy.context.object.data.energy = light_spec["power"]
 
+    # Add some ambient occlusion.
+    bpy.context.scene.cycles.use_fast_gi = True
+    bpy.context.scene.world.light_settings.distance = 0.2
+
+    # Ensure a square image is produced.
     old_resolution = max([
         bpy.context.scene.render.resolution_x,
         bpy.context.scene.render.resolution_y,
     ])
-
     resolution = 1080
     bpy.context.scene.render.resolution_x = resolution
     bpy.context.scene.render.resolution_y = resolution
@@ -361,10 +398,6 @@ def set_up_camera_and_lights():
 
     # Improve contrast.
     bpy.context.scene.view_settings.look = "High Contrast"
-
-    # Add some ambient occlusion.
-    bpy.context.scene.cycles.use_fast_gi = True
-    bpy.context.scene.world.light_settings.distance = 0.2
 
 
 def main():
@@ -381,11 +414,11 @@ def main():
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
 
-    set_up_camera_and_lights()
+    set_up_for_render()
 
     parser = argparse.ArgumentParser()
     parser.add_argument("polytwister")
-    parser.add_argument("z", type=float)
+    parser.add_argument("w", type=float)
     parser.add_argument("-r", "--resolution", type=int, default=DEFAULT_CYLINDER_RESOLUTION)
     parser.add_argument("-s", "--scale", type=float, default=1)
     parser.add_argument("-m", "--metadata-out", type=str)
@@ -403,7 +436,7 @@ def main():
     polytwister_name = polytwister_name.replace("_", " ")
 
     kwargs = {
-        "z": args.z,
+        "w": args.w,
         "cylinder_resolution": args.resolution,
         "scale": args.scale,
     }
