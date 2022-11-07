@@ -317,22 +317,38 @@ def convert_spherical_to_cartesian(radius, latitude, longitude):
 
 def set_up_for_render():
     """This function does the following:
+
     - Add a camera object and set it to the primary camera of the scene.
     - Add lighting.
     - Add ambient occlusion.
     - Ensure the scene renders a square 1080x1080 image.
     - Set the engine to Cycles and the device to the GPU.
-    - Set "Look" in Render -> Color Management to High Contrast.
+    - Set Render Properties -> Color Management -> Look to "High Contrast."
 
     When adjusting lighting and rendering, we are aiming for a decently
     photographic look with good depth perception but without distracting
-    from the polytwister's shape. For this reason, we are using big area
-    lights for soft shadows. Hard shadows can give the impression of features
-    that aren't really there. However, dark areas are not themselves bad --
-    insufficient contrast can inhibit depth perception and lead to an
-    unattractive, washed-out appearance. I am told by my YouTube education
-    that inadequate shadows is a common beginner mistake.
+    from the polytwister's shape. The lighting is a one-size-fits-all
+    solution; ideally we would adjust lighting for individual
+    polytwisters but that would take too much effort.
+
+    We are using big area lights for soft shadows. Hard shadows can give
+    the impression of features that aren't really there, and aren't
+    appropriate for presenting mathematical objects.
+
+    However, dark areas are not themselves bad -- insufficient contrast can
+    inhibit depth perception and lead to an unattractive, washed-out
+    appearance. I am told by my YouTube education that inadequate shadows
+    are a common beginner mistake.
+
+    Standard three-point lighting is used to light the object. Ambient
+    occlusion adds some darkness to the crevices of nonconvex polytwisters,
+    preventing overexposure in the area directly facing the key light.
+
+    The Look setting in Color Management controls the nonlinear mapping
+    from physical units to color values that look good on a monitor or
+    projector. See the Blender docs.
     """
+
     camera_distance = 14.5
     camera_latitude = math.radians(10)
     camera_longitude = math.radians(45)
