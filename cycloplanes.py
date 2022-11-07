@@ -12,8 +12,9 @@ def rotate_2d(x, y, theta):
     )
 
 
-def get_cycloplane_error(point, zenith, azimuth, radius=1.0):
-    x, y, z, w = point
+def get_cycloplane_error(point, spec):
+    radius, zenith, azimuth = spec
+    x, y, z, w = point / radius
     theta = zenith / 2
     phi = azimuth
     x, y = rotate_2d(x, y, -phi)
@@ -26,8 +27,8 @@ def get_cycloplane_error(point, zenith, azimuth, radius=1.0):
 
 def get_summed_cycloplane_error(point, cycloplane_specs):
     return sum([
-        get_cycloplane_error(point, zenith, azimuth)
-        for zenith, azimuth in cycloplane_specs
+        get_cycloplane_error(point, spec)
+        for spec in cycloplane_specs
     ])
 
 
@@ -41,9 +42,9 @@ def find_minimum(start, cycloplane_specs):
 
 def main():
     cycloplane_specs = [
-        (0.0, 0.0),
-        (np.pi / 2, 0.0),
-        (np.pi / 2, np.pi / 2),
+        (1.0, 0.0, 0.0),
+        (1.0, np.pi / 2, 0.0),
+        (1.0, np.pi / 2, np.pi / 2),
     ]
     count = 1000
     points = np.zeros((count, 4))
