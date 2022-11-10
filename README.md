@@ -10,7 +10,7 @@ To view a single cross section in the Blender GUI:
 
     blender --python make_polytwister.py -- bloated_icosatwister 0.13 --normalize
 
-where `blender` is substituted with the path of the Blender executable, `bloated_icosatwister` is the name of a polytwister, and `0.13` is the W-coordinate of 3-space where the cross section is taken. `--normalize` is optional and ensures that the cross section is scaled to fit in the camera's view.
+where `blender` is substituted with the path of the Blender executable, `bloated_icosatwister` is the name of a polytwister, and `0.13` is the W-coordinate of 3-space where the cross section is taken. `--normalize` is optional and ensures that the cross section is scaled to fit in the camera's view. The above command sets up a camera and lights and is ready for rendering a still image.
 
 To render an animation, run the following and wait a few hours:
 
