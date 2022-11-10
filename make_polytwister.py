@@ -321,6 +321,7 @@ def set_up_for_render():
     - Add a camera object and set it to the primary camera of the scene.
     - Add lighting.
     - Add ambient occlusion.
+    - Set the background to transparent.
     - Ensure the scene renders a square 1080x1080 image.
     - Set the engine to Cycles and the device to the GPU.
     - Set Render Properties -> Color Management -> Look to "High Contrast."
@@ -346,7 +347,7 @@ def set_up_for_render():
 
     The Look setting in Color Management controls the nonlinear mapping
     from physical units to color values that look good on a monitor or
-    projector. See the Blender docs.
+    projector. See the Blender docs on color management.
     """
 
     camera_distance = 14.5
@@ -394,6 +395,9 @@ def set_up_for_render():
     # Add some ambient occlusion.
     bpy.context.scene.cycles.use_fast_gi = True
     bpy.context.scene.world.light_settings.distance = 0.2
+
+    # Set background to transparent.
+    bpy.context.scene.render.film_transparent = True
 
     # Ensure a square image is produced.
     old_resolution = max([

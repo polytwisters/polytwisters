@@ -163,8 +163,12 @@ def main():
     logging.basicConfig(level=logging.DEBUG)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("polytwister")
+    parser.add_argument("polytwister", help="Name of the polytwister.")
+    parser.add_argument("-n", "--num-frames", type=int, default=100, help="Number of frames, >= 2.")
     args = parser.parse_args()
+
+    if args.num_frames < 2:
+        raise ValueError("--num-frames must be >= 2")
 
     start_time = time.time()
 
@@ -175,7 +179,7 @@ def main():
         render_animation(
             polytwister,
             max_w=max_w,
-            num_frames=100,
+            num_frames=args.num_frames,
             additional_args=["--scale", str(scale), "--resolution", "128"],
         )
     finally:
