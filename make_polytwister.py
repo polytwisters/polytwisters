@@ -351,6 +351,7 @@ def set_up_for_render():
     """
 
     camera_distance = 14.5
+    # Just enough angle to see the tops of convex polytwister sections.
     camera_latitude = math.radians(15)
     camera_longitude = math.radians(10)
     camera_location = convert_spherical_to_cartesian(
