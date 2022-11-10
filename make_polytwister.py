@@ -433,11 +433,44 @@ def main():
     set_up_for_render()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("polytwister")
-    parser.add_argument("w", type=float)
-    parser.add_argument("-r", "--resolution", type=int, default=DEFAULT_CYLINDER_RESOLUTION)
-    parser.add_argument("-s", "--scale", type=float, default=1)
-    parser.add_argument("-m", "--metadata-out", type=str)
+    parser.add_argument(
+        "polytwister",
+        help="Name of the polytwister. For convenience, underscores are replaced with spaces.",
+    )
+    parser.add_argument(
+        "w",
+        type=float,
+        help="W-coordinate of the 3-space where the cross section is taken.",
+    )
+    parser.add_argument(
+        "-r",
+        "--resolution",
+        type=int,
+        default=DEFAULT_CYLINDER_RESOLUTION,
+        help="Number of segments used for cylinders.",
+    )
+    parser.add_argument(
+        "-n",
+        "--normalize",
+        action="store_true",
+        help="If specified, normalize the size of the object so it fits nicely in camera.",
+    )
+    parser.add_argument(
+        "-s",
+        "--scale",
+        type=float,
+        default=1,
+        help=(
+            "Uniform scaling applied to object. "
+            "If --normalize is provided, scaling is done after normalization."
+        ),
+    )
+    parser.add_argument(
+        "-m",
+        "--metadata-out",
+        type=str,
+        help="If specified, write out a JSON file with information about the cross section."
+    )
 
     argv = sys.argv
     for i, argument in enumerate(argv):
@@ -468,6 +501,11 @@ def main():
         else:
             raise ValueError(f'Polytwister "{polytwister_name}" not found.')
         realize(polytwister, **kwargs)
+
+    if args.normalize:
+        max_distance_from_origin = get_max_distance_from_origin()
+        if max_distance_from_origin != 0:
+            do_scale(args.scale / max_distance_from_origin)
 
     if args.metadata_out is not None:
         with open(args.metadata_out, "w") as f:

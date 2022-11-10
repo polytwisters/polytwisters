@@ -6,7 +6,13 @@ Polytwisters are strange curved four-dimensional shapes discovered by Jonathan B
 
 This has only been tested on macOS, but should also work on Linux. You must have Blender installed, and ffmpeg if you want to make a video.
 
-Run the following and wait a few hours:
+To view a single cross section in the Blender GUI:
+
+    blender --python make_polytwister.py -- bloated_icosatwister 0.13 --normalize
+
+where `blender` is substituted with the path of the Blender executable, `bloated_icosatwister` is the name of a polytwister, and `0.13` is the W-coordinate of 3-space where the cross section is taken. `--normalize` is optional and ensures that the cross section is scaled to fit in the camera's view.
+
+To render an animation, run the following and wait a few hours:
 
     python3 render_animation.py bloated_icosatwister
 
