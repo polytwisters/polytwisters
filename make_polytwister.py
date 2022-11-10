@@ -351,8 +351,8 @@ def set_up_for_render():
     """
 
     camera_distance = 14.5
-    camera_latitude = math.radians(10)
-    camera_longitude = math.radians(45)
+    camera_latitude = math.radians(15)
+    camera_longitude = math.radians(10)
     camera_location = convert_spherical_to_cartesian(
         camera_distance, camera_latitude, camera_longitude
     )
