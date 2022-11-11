@@ -371,9 +371,9 @@ def set_up_for_render():
     # absolute.
     light_specs = [
         # Key light
-        {"latitude": 40, "longitude": -50, "power": 400},
+        {"latitude": 40, "longitude": -50, "power": 900},
         # Fill light
-        {"latitude": 0, "longitude": 50, "power": 100},
+        {"latitude": 0, "longitude": 50, "power": 300},
         # Back light
         {"latitude": -20, "longitude": 180 + 45, "power": 400},
     ]
