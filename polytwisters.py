@@ -1,3 +1,27 @@
+"""This file defines polytwisters in a declarative, machine-readable
+representation, mainly using Boolean operations on cycloplanes. The
+encoding is entirely dicts, arrays, strings, and numbers, so that it
+is exportable as JSON to other languages and environments.
+
+This representation encodes polytwisters in 4D, prior to taking a 3D
+cross section or discretizing into a mesh. There is no dependency on
+Blender.
+
+Each polytwister is a tree of nodes, each with a "type" field. The leaf
+nodes of the tree have "type" set to "cycloplane" and specify the
+coordinates of the point on the sphere using the zenith and azimuth
+angles. If "type" is "intersection", "union", or "difference", a Boolean
+operator on an array of operands is meant. (In the case of "difference"
+the second, third, etc. operands are subtracted from the first.) If
+"type" is "rotated_copies", then the operand is duplicated a number of
+times with symmetrically rotated azimuth angles. This is not necessary
+to encode polytwisters, but when computing meshes it saves time to do
+Boolean operations and then make rotated copies rather than the reverse
+order.
+
+Internally, this file uses a number of shortcut functions to define
+the trees of cycloplanes and operations, which aids in readability.
+"""
 import math
 
 PHI = (1 + math.sqrt(5)) / 2
