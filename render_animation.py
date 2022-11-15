@@ -138,7 +138,7 @@ def render_animation(
     aren't blank then the max W is too small and the animation will
     be cut off.
     """
-    directory = pathlib.Path("out") / polytwister
+    directory = pathlib.Path("out") / polytwister / "transparent_frames"
     os.makedirs(str(directory), exist_ok=True)
 
     remaining_frames = list(range(1, num_frames - 1))
