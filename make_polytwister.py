@@ -14,6 +14,8 @@ if directory not in sys.path:
     sys.path.append(directory)
 import polytwisters
 
+EXPECTED_BLENDER_VERSION = (3, 3)
+
 EPSILON = 1e-10
 LARGE = 10e3
 DEFAULT_CYLINDER_RESOLUTION = 64
@@ -422,12 +424,11 @@ def set_up_for_render():
 
 
 def main():
-    expected_version = (3, 2)
     major, minor, patch = bpy.app.version
-    if (major, minor) != expected_version:
+    if (major, minor) != EXPECTED_BLENDER_VERSION:
         warnings.warn(
             "This script is tested with Blender "
-            f"{expected_version[0]}.{expected_version[1]}, but you have "
+            f"{EXPECTED_BLENDER_VERSION[0]}.{EXPECTED_BLENDER_VERSION[1]}, but you have "
             f"{major}.{minor}.{patch}. Errors may occur."
         )
 
