@@ -51,12 +51,16 @@ def find_cycloplanes_intersection(cycloplane_specs, rng, count=1000):
         radius = np.sqrt(np.sum(np.square(minimum)))
         radii[i] = radius
         points[i, :] = minimum
-    midpoint = (np.max(radii) + np.min(radii)) / 2
-    lower = radii[radii < midpoint]
-    upper = radii[radii >= midpoint]
-    if np.std(lower) < 1e-4 and np.std(upper) < 1e-4:
-        radii = [np.mean(lower), np.mean(upper)]
-        standard_deviations = [np.std(lower), np.std(upper)]
+    if np.std(radii) > 1e-4:
+        midpoint = (np.max(radii) + np.min(radii)) / 2
+        lower = radii[radii < midpoint]
+        upper = radii[radii >= midpoint]
+        if np.std(lower) < 1e-4 and np.std(upper) < 1e-4:
+            radii = [np.mean(lower), np.mean(upper)]
+            standard_deviations = [np.std(lower), np.std(upper)]
+        else:
+            radii = [np.mean(radii)]
+            standard_deviations = [np.std(radii)]
     else:
         radii = [np.mean(radii)]
         standard_deviations = [np.std(radii)]
@@ -102,9 +106,11 @@ def main():
         for i in range(len(radii)):
             print(f"Radius = {radii[i]:.5}, standard deviation = {standard_deviations[i]:.5}")
         if any([x > 1e-4 for x in standard_deviations]):
-            print(f"Verdict: not a circle")
+            print(f"Non-circle detected")
+        elif len(radii) > 1:
+            print(f"Found {len(radii)} radii")
         else:
-            print(f"Verdict: may be a circle")
+            print(f"Found one radius")
         points = result["points"]
         X, Y, Z, W = points[:, 0], points[:, 1], points[:, 2], points[:, 3]
 
