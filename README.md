@@ -23,3 +23,7 @@ To compile the frames into a video at `out.mp4`:
     python3 make_video.py out/bloated_icosatwister
 
 If you are impatient, you may run `make_video.py` during the execution of `render_animation.py` to see all frames so far. `render_animation.py` renders frames out of order so that the time resolution of the animation gradually increases.
+
+To export all polytwisters as STL meshes, run:
+
+    python3 export_meshes.py
