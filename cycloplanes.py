@@ -91,22 +91,22 @@ def main():
         (1.0, zenith, 2 * np.pi * (2 / 3)),
     ]
     """
-    cycloplane_specs = [
-        (1.0, 0.0, 0.0),
-        (1.0, np.pi / 2, 0.0),
-        (1.0, np.pi / 2 * 0.5, np.pi / 2 * 0.5),
-    ]
-    result = find_cycloplanes_intersection(cycloplane_specs, rng)
-    radii = result["radii"]
-    standard_deviations = result["standard_deviations"]
-    for i in range(len(radii)):
-        print(f"Radius = {radii[i]:.5}, standard deviation = {standard_deviations[i]:.5}")
-    if any([x > 1e-4 for x in standard_deviations]):
-        print(f"Verdict: not a circle")
-    else:
-        print(f"Verdict: may be a circle")
-    points = result["points"]
-    X, Y, Z, W = points[:, 0], points[:, 1], points[:, 2], points[:, 3]
+    for i in range(10):
+        cycloplane_specs = [
+            (1.0, rng.uniform(0, np.pi), rng.uniform(0, 2 * np.pi))
+            for i in range(3)
+        ]
+        result = find_cycloplanes_intersection(cycloplane_specs, rng)
+        radii = result["radii"]
+        standard_deviations = result["standard_deviations"]
+        for i in range(len(radii)):
+            print(f"Radius = {radii[i]:.5}, standard deviation = {standard_deviations[i]:.5}")
+        if any([x > 1e-4 for x in standard_deviations]):
+            print(f"Verdict: not a circle")
+        else:
+            print(f"Verdict: may be a circle")
+        points = result["points"]
+        X, Y, Z, W = points[:, 0], points[:, 1], points[:, 2], points[:, 3]
 
     plt.gca().set_aspect("equal")
     plt.scatter(X, Y, 1)
