@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize
 
+import polytwisters
+
 
 def rotate_2d(x, y, theta):
     return (
@@ -40,30 +42,82 @@ def find_minimum(start, cycloplane_specs):
     return temp.x
 
 
+def find_cycloplanes_intersection(cycloplane_specs, rng, count=1000):
+    points = np.zeros((count, 4))
+    radii = np.zeros(count)
+    for i in range(count):
+        point = rng.uniform(-3.0, 3.0, size=(4,))
+        minimum = find_minimum(point, cycloplane_specs)
+        radius = np.sqrt(np.sum(np.square(minimum)))
+        radii[i] = radius
+        points[i, :] = minimum
+    midpoint = (np.max(radii) + np.min(radii)) / 2
+    lower = radii[radii < midpoint]
+    upper = radii[radii >= midpoint]
+    if np.std(lower) < 1e-4 and np.std(upper) < 1e-4:
+        radii = [np.mean(lower), np.mean(upper)]
+        standard_deviations = [np.std(lower), np.std(upper)]
+    else:
+        radii = [np.mean(radii)]
+        standard_deviations = [np.std(radii)]
+    return {
+        "points": points,
+        "radii": radii,
+        "standard_deviations": standard_deviations,
+    }
+
 def main():
+    rng = np.random.default_rng(0)
+    """
     cycloplane_specs = [
         (1.0, 0.0, 0.0),
         (1.0, np.pi / 2, 0.0),
         (1.0, np.pi / 2, np.pi / 2),
     ]
-    count = 1000
-    points = np.zeros((count, 4))
-    radii = np.zeros(count)
-    for i in range(count):
-        point = [(random.random() * 2 - 1) * 3 for i in range(4)]
-        minimum = find_minimum(point, cycloplane_specs)
-        error = get_summed_cycloplane_error(minimum, cycloplane_specs)
-        radius = np.sqrt(np.sum(np.square(minimum)))
-        radii[i] = radius
-        points[i, :] = minimum
-    average_radius = np.mean(radii)
-    print(f"Average radius = {average_radius:.5}")
-    standard_deviation = np.std(radii)
-    print(f"Standard deviation of radii = {standard_deviation:.5}")
+    cycloplane_specs = [
+        (1.0, 0.0, 0.0),
+        (1.0, 0.5 * np.pi / 2, 0.0),
+        (1.0, 0.5 * np.pi / 2, 0.5 * np.pi / 2),
+    ]
+    cycloplane_specs = [
+        (1.0, polytwisters.OCTAHEDRON_ZENITH, 0.0),
+        (1.0, polytwisters.OCTAHEDRON_ZENITH, 0.0),
+        (1.0, np.pi - polytwisters.OCTAHEDRON_ZENITH, np.pi / 2),
+    ]
+    zenith = 0.5 * np.pi * 0.5
+    cycloplane_specs = [
+        (1.0, zenith, 0.0),
+        (1.0, zenith, 2 * np.pi * (1 / 3)),
+        (1.0, zenith, 2 * np.pi * (2 / 3)),
+    ]
+    """
+    cycloplane_specs = [
+        (1.0, 0.0, 0.0),
+        (1.0, np.pi / 2, 0.0),
+        (1.0, np.pi / 2 * 0.5, np.pi / 2 * 0.5),
+    ]
+    result = find_cycloplanes_intersection(cycloplane_specs, rng)
+    radii = result["radii"]
+    standard_deviations = result["standard_deviations"]
+    for i in range(len(radii)):
+        print(f"Radius = {radii[i]:.5}, standard deviation = {standard_deviations[i]:.5}")
+    if any([x > 1e-4 for x in standard_deviations]):
+        print(f"Verdict: not a circle")
+    else:
+        print(f"Verdict: may be a circle")
+    points = result["points"]
+    X, Y, Z, W = points[:, 0], points[:, 1], points[:, 2], points[:, 3]
 
-    plt.scatter(points[:, 0], points[:, 1], 1)
+    plt.gca().set_aspect("equal")
+    plt.scatter(X, Y, 1)
     plt.show()
-    plt.scatter(points[:, 2], points[:, 3], 1)
+
+    plt.gca().set_aspect("equal")
+    plt.scatter(Z, W, 1)
+    plt.show()
+
+    plt.gca().set_aspect("equal")
+    plt.scatter(X, Z, 1)
     plt.show()
 
 
