@@ -2,37 +2,24 @@ import argparse
 import json
 import logging
 import math
-import os
 import pathlib
-import platform
-import subprocess
 import sys
 import time
 
-system = platform.system()
-if system == "Darwin":
-    BLENDER = "/Applications/Blender.app/Contents/MacOS/Blender"
-else:
-    BLENDER = "blender"
-BLENDER_SCRIPT = pathlib.Path(__file__).resolve().parent / "make_polytwister.py"
-
-
-def run_script(blender_args, script_args):
-    command = [BLENDER, "-b", "--python", str(BLENDER_SCRIPT)]
-    subprocess.run(command + blender_args + ["--"] + script_args, check=True)
+import common
 
 
 def render_frame(args, file_name):
     out_prefix = "out"
-    run_script(["-o", out_prefix, "-f", "1"], args)
+    common.run_script(["-o", out_prefix, "-f", "1"], args)
     out_file = out_prefix + "0001.png"
-    os.rename(out_file, file_name)
+    pathlib.Path(out_file).rename(file_name)
 
 
 def get_max_distance_from_origin(polytwister, w):
     metadata_json = "metadata.json"
     args = [polytwister, str(w), "--metadata-out", metadata_json]
-    run_script([], args)
+    common.run_script([], args)
     with open(metadata_json) as f:
         root = json.load(f)
     return root["max_distance_from_origin"]
@@ -139,7 +126,7 @@ def render_animation(
     be cut off.
     """
     directory = pathlib.Path("out") / polytwister / "transparent_frames"
-    os.makedirs(str(directory), exist_ok=True)
+    directory.mkdir(exist_ok=True)
 
     remaining_frames = list(range(1, num_frames - 1))
     frame_order = []

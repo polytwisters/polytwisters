@@ -613,5 +613,4 @@ ALL_POLYTWISTERS = [
     get_great_bloated_dodecatwister(),
     get_small_stellated_dodecatwister(),
     get_small_quasistellated_dodecatwister(),
-    get_great_icosatwister(),
 ]

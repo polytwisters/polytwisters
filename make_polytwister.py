@@ -477,6 +477,11 @@ def main():
         type=str,
         help="If specified, write out a JSON file with information about the cross section."
     )
+    parser.add_argument(
+        "--mesh-out",
+        type=str,
+        help="If specified, write out a mesh file. Only .stl is supported."
+    )
 
     argv = sys.argv
     for i, argument in enumerate(argv):
@@ -520,6 +525,9 @@ def main():
                 "max_distance_from_origin": max_distance_from_origin
             }
             json.dump(out_json, f)
+
+    if args.mesh_out is not None:
+        bpy.ops.export_mesh.stl(filepath=args.mesh_out)
 
 
 if __name__ == "__main__":
