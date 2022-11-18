@@ -48,6 +48,9 @@ def find_cycloplanes_intersection(cycloplane_specs, rng, count=1000):
     for i in range(count):
         point = rng.uniform(-3.0, 3.0, size=(4,))
         minimum = find_minimum(point, cycloplane_specs)
+        error = get_summed_cycloplane_error(minimum, cycloplane_specs)
+        if error > 1e-5:
+            raise ValueError("Convergence to local minimum that is not 0.")
         radius = np.sqrt(np.sum(np.square(minimum)))
         radii[i] = radius
         points[i, :] = minimum
