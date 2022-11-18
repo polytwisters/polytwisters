@@ -27,3 +27,9 @@ If you are impatient, you may run `make_video.py` during the execution of `rende
 To export all polytwisters as STL meshes, run:
 
     python3 export_meshes.py
+
+## Cycloplane research code
+
+This repo also includes code for an ongoing research effort to gather experimental data on how the boundaries of cycloplanes constructed from Hopf fibers intersect. `cycloplanes.py` implements the algorithms for analysis while `test_cycloplane.py` runs experiments using both random and fixed cycloplane configurations. All randomness is seeded, so the tests are deterministic.
+
+Install `numpy scipy pytest`, then run `pytest`.
