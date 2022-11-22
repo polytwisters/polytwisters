@@ -191,11 +191,15 @@ class _Realizer:
     def realize(self, polytwister):
         parts = self.traverse_root(polytwister["tree"])
 
+        bpy.ops.material.new()
+        material = bpy.data.materials[-1]
+
         for part in parts:
             deselect_all()
             part.select_set(True)
             bpy.context.view_layer.objects.active = part
             shade_smooth()
+            bpy.context.object.active_material = material
 
         group_under_empty(parts)
         do_scale(DEFAULT_SCALE * self.scale)
