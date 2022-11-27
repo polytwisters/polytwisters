@@ -330,6 +330,7 @@ def set_up_for_render():
     - Set the background to transparent.
     - Ensure the scene renders a square 1080x1080 image.
     - Set the engine to Cycles and the device to the GPU.
+    - Reduce the sample count to 128 and the preview sample count to 16.
     - Set Render Properties -> Color Management -> Look to "High Contrast."
 
     When adjusting lighting and rendering, we are aiming for a decently
@@ -422,6 +423,11 @@ def set_up_for_render():
     # Use Cycles and hardware acceleration.
     bpy.context.scene.render.engine = "CYCLES"
     bpy.context.scene.cycles.device = "GPU"
+
+    # Greatly reduce the sample count. OpenImageDenoise is on by default,
+    # and it does an excellent job.
+    bpy.context.scene.cycles.samples = 128
+    bpy.context.scene.cycles.preview_samples = 16
 
     # Improve contrast.
     bpy.context.scene.view_settings.look = "High Contrast"
