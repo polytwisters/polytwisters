@@ -18,5 +18,6 @@ BLENDER_SCRIPT = pathlib.Path(__file__).resolve().parent / "make_polytwister.py"
 
 
 def run_script(blender_args, script_args):
-    command = [BLENDER, "-b", "--python", str(BLENDER_SCRIPT)]
+    # command = [BLENDER, "-b", "--python", str(BLENDER_SCRIPT)]
+    command = [BLENDER, "--python", str(BLENDER_SCRIPT)]
     subprocess.run(command + blender_args + ["--"] + script_args, check=True)

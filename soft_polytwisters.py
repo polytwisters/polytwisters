@@ -8,7 +8,7 @@ TETRAHEDRON_VERTICES = [
     (1, 1, 1),
     (-1, -1, 1),
     (1, -1, -1),
-    (-1, -1, -1),
+    (-1, 1, -1),
 ]
 
 
@@ -85,7 +85,7 @@ def normalize_points(points):
 
 def orient_along_x_axis(reference_point, points):
     x_axis = np.array([1.0, 0.0, 0.0])
-    normalized_point = reference_point / np.linalg.norm(reference_point)
+    normalized_point = np.array(reference_point) / np.linalg.norm(reference_point)
     axis = np.cross(normalized_point, x_axis)
     axis /= np.linalg.norm(axis)
     cos_angle = np.dot(normalized_point, x_axis)

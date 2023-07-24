@@ -309,6 +309,14 @@ def realize_soft_polytwister(polytwister, w, cylinder_resolution=DEFAULT_CYLINDE
         "Roughness": 0.1,
         "Transmission": 0.7,
     }
+    settings = {
+        "Base Color": (0.327, 0.217, 0.595, 1),
+        "Roughness": 0.1,
+        "Subsurface": 0.403,
+        "Subsurface Radius": (0.02, 0.02, 0.02),
+        "Subsurface Color": (0.327, 0.217, 0.595, 1),
+        "Transmission": 0.05,
+    }
     for key, value in settings.items():
         principled_bsdf.inputs[key].default_value = value
 
