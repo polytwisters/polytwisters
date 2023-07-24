@@ -2,6 +2,7 @@ import argparse
 import json
 import math
 import os
+import subprocess
 import sys
 import traceback
 import warnings
@@ -12,7 +13,9 @@ import mathutils
 directory = os.path.dirname(bpy.data.filepath)
 if directory not in sys.path:
     sys.path.append(directory)
-import polytwisters
+
+import hard_polytwisters
+import soft_polytwisters
 
 EXPECTED_BLENDER_VERSION = (3, 3)
 
@@ -114,17 +117,19 @@ def create_cycloplane(
     return bpy.context.object
 
 
+def create_empty_mesh():
+    bpy.ops.mesh.primitive_cylinder_add()
+    bpy.ops.object.editmode_toggle()
+    bpy.ops.mesh.delete(type="VERT")
+    bpy.ops.object.editmode_toggle()
+
+
 def _create_south_pole_cycloplane(w):
     """Create the cross section of a cycloplane whose point is located at the
     south pole."""
     deselect_all()
     if abs(w) >= 1:
-        # Hack to create an empty mesh, by creating a cylinder and deleting
-        # all its vertices.
-        bpy.ops.mesh.primitive_cylinder_add()
-        bpy.ops.object.editmode_toggle()
-        bpy.ops.mesh.delete(type="VERT")
-        bpy.ops.object.editmode_toggle()
+        create_empty_mesh()
     else:
         bpy.ops.mesh.primitive_cylinder_add(
             radius=LARGE,
@@ -175,7 +180,7 @@ def make_rotated_copies(n):
     return copies
 
 
-def shade_smooth():
+def shade_auto_smooth():
     bpy.ops.object.shade_smooth()
     bpy.context.object.data.use_auto_smooth = True
     bpy.context.object.data.auto_smooth_angle = math.radians(30.0)
@@ -198,7 +203,7 @@ class _Realizer:
             deselect_all()
             part.select_set(True)
             bpy.context.view_layer.objects.active = part
-            shade_smooth()
+            shade_auto_smooth()
             bpy.context.object.active_material = material
 
         group_under_empty(parts)
@@ -262,6 +267,52 @@ def realize(polytwister, w, cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION, sca
     return realizer.realize(polytwister)
 
 
+def realize_soft_polytwister(polytwister, w, cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION, scale=1):
+    obj_path = "tmp.obj"
+    subprocess.run([
+        "py",
+        "-3",
+        "make_soft_polytwister.py",
+        polytwister["names"][0],
+        str(w),
+        obj_path,
+        "--resolution",
+        str(cylinder_resolution),
+        "--scale",
+        str(scale),
+    ], check=True)
+    bpy.ops.import_scene.obj(filepath=obj_path)
+
+    # The imported mesh is not automatically made active, but it is selected.
+    for object_ in bpy.context.scene.objects:
+        if object_.select_get():
+            break
+    else:
+        raise RuntimeError("Selected mesh not found, may be a bug")
+    bpy.context.view_layer.objects.active = object_
+
+    do_scale(DEFAULT_SCALE)
+
+    bpy.ops.object.modifier_add(type="REMESH")
+    modifier = bpy.context.object.modifiers[-1]
+    modifier.mode = "SHARP"
+    modifier.octree_depth = 8
+    modifier.use_smooth_shade = True
+
+    bpy.ops.material.new()
+    material = bpy.data.materials[-1]
+    bpy.context.object.active_material = material
+
+    principled_bsdf = material.node_tree.nodes["Principled BSDF"]
+    settings = {
+        "Base Color": (0.0634336, 0.493001, 0.8, 1),
+        "Roughness": 0.1,
+        "Transmission": 0.7,
+    }
+    for key, value in settings.items():
+        principled_bsdf.inputs[key].default_value = value
+
+
 def get_max_distance_from_origin():
     result = 0.0
     objects = [bpy.context.object] + list(bpy.context.object.children)
@@ -271,30 +322,6 @@ def get_max_distance_from_origin():
         for vertex in object_.data.vertices:
             result = max(result, vertex.co.length)
     return result
-
-
-def create_convex_regular_polytwisters(w, spacing=2.5, translate_z=1):
-    platonic_solid_polytwisters = [
-        polytwisters.get_tetratwister(),
-        polytwisters.get_cubetwister(),
-        polytwisters.get_octatwister(),
-        polytwisters.get_dodecatwister(),
-        polytwisters.get_icosatwister(),
-    ]
-    dyadic_twisters = [
-        polytwisters.get_dyadic_twister(3 + n)
-        for n in range(len(platonic_solid_polytwisters))
-    ]
-
-    for i, polytwister in enumerate(platonic_solid_polytwisters):
-        realize(polytwister, w=w)
-        bpy.ops.transform.translate(value=(i * spacing, 0, translate_z))
-
-    for i, polytwister in enumerate(dyadic_twisters):
-        realize(polytwister, w=w)
-        bpy.ops.transform.translate(
-            value=(i * spacing, 0, translate_z + spacing)
-        )
 
 
 def rotation_to_point_to_origin(point):
@@ -371,6 +398,18 @@ def set_up_for_render():
     camera = bpy.context.object
     bpy.context.scene.camera = bpy.context.object
 
+    world_node_tree = bpy.context.scene.world.node_tree
+    nodes = world_node_tree.nodes
+    nodes.clear()
+
+    background_node = nodes.new(type="ShaderNodeBackground")
+    environment_node = nodes.new(type="ShaderNodeTexEnvironment")
+    environment_node.image = bpy.data.images.load("//assets/studio_environment_2k.exr")
+    output_node = nodes.new(type="ShaderNodeOutputWorld")
+    links = world_node_tree.links
+    links.new(environment_node.outputs["Color"], background_node.inputs["Color"])
+    links.new(background_node.outputs["Background"], output_node.inputs["Surface"])
+
     # Latitude and longitude are given in degrees for readability.
     # Longitudes are relative to the camera: a longitude of 0 degrees
     # is directly behind the camera, 90 degrees is directly from the
@@ -378,12 +417,13 @@ def set_up_for_render():
     # absolute.
     light_specs = [
         # Key light
-        {"latitude": 40, "longitude": -50, "power": 900},
+        {"latitude": 40, "longitude": -50, "power": 900, "radius": 5.0},
         # Fill light
-        {"latitude": 0, "longitude": 50, "power": 300},
+        {"latitude": 0, "longitude": 50, "power": 300, "radius": 5.0},
         # Back light
-        {"latitude": -20, "longitude": 180 + 45, "power": 400},
+        {"latitude": -20, "longitude": 180 + 45, "power": 400, "radius": 15.0},
     ]
+    power_multiplier = 0.3
     distance = 10.0
 
     for light_spec in light_specs:
@@ -394,11 +434,11 @@ def set_up_for_render():
         )
         bpy.ops.object.light_add(
             type="AREA",
-            radius=5,
+            radius=light_spec["radius"],
             location=location,
             rotation=rotation_to_point_to_origin(location)
         )
-        bpy.context.object.data.energy = light_spec["power"]
+        bpy.context.object.data.energy = light_spec["power"] * power_multiplier
 
     # Add some ambient occlusion.
     bpy.context.scene.cycles.use_fast_gi = True
@@ -511,17 +551,27 @@ def main():
         "scale": args.scale,
     }
 
+    all_polytwisters = (
+        hard_polytwisters.ALL_HARD_POLYTWISTERS
+        + soft_polytwisters.ALL_SOFT_POLYTWISTERS
+    )
+
     if polytwister_name == "all":
-        for i, polytwister in enumerate(polytwisters.ALL_POLYTWISTERS):
+        for i, polytwister in enumerate(all_polytwisters):
             realize(polytwister, **kwargs)
             bpy.ops.transform.translate(value=(i * args.spacing, 0, 0))
     else:
-        for polytwister in polytwisters.ALL_POLYTWISTERS:
+        for polytwister in all_polytwisters:
             if polytwister_name in polytwister["names"]:
                 break
         else:
             raise ValueError(f'Polytwister "{polytwister_name}" not found.')
-        realize(polytwister, **kwargs)
+        if polytwister["type"] == "hard":
+            realize(polytwister, **kwargs)
+        elif polytwister["type"] == "soft":
+            realize_soft_polytwister(polytwister, **kwargs)
+        else:
+            raise ValueError("Invalid polytwister type")
 
     if args.normalize:
         max_distance_from_origin = get_max_distance_from_origin()

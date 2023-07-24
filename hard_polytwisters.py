@@ -587,7 +587,7 @@ def get_great_icosatwister():
     return polytwister
 
 
-ALL_POLYTWISTERS = [
+ALL_HARD_POLYTWISTERS = [
     get_dyadic_twister(3),
     get_dyadic_twister(4),
     get_dyadic_twister(5),
@@ -614,3 +614,5 @@ ALL_POLYTWISTERS = [
     get_small_stellated_dodecatwister(),
     get_small_quasistellated_dodecatwister(),
 ]
+for polytwister in ALL_HARD_POLYTWISTERS:
+    polytwister["type"] = "hard"
