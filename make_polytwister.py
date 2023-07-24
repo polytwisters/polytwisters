@@ -68,11 +68,29 @@ def group_under_empty(parts):
     return parent
 
 
+def make_material_from_config(config):
+    """Create a material on the active object and configure a Principled BSDF."""
+    bpy.ops.material.new()
+    material = bpy.data.materials[-1]
+    bpy.context.object.active_material = material
+
+    if config is None:
+        return material
+
+    principled_bsdf = material.node_tree.nodes["Principled BSDF"]
+    for key, value in config.items():
+        if isinstance(value, list):
+            value = tuple(value)
+        principled_bsdf.inputs[key].default_value = value
+
+    return material
+
+
 def create_cycloplane(
     w,
     zenith,
     azimuth,
-    cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION,
+    resolution=DEFAULT_CYLINDER_RESOLUTION,
 ):
     """Create a cross section of a cycloplane constructed from a Hopf fiber.
     w is the cross section coordinate, zenith is the angle from the north pole,
@@ -93,7 +111,7 @@ def create_cycloplane(
     bpy.ops.mesh.primitive_cylinder_add(
         radius=1,
         depth=LARGE,
-        vertices=cylinder_resolution,
+        vertices=resolution,
         location=(0, 0, 0),
         scale=(1, 1, 1),
     )
@@ -189,16 +207,22 @@ def shade_auto_smooth():
 
 class _Realizer:
 
-    def __init__(self, w, cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION, scale=1):
+    def __init__(
+        self,
+        w,
+        material_config=None,
+        resolution=DEFAULT_CYLINDER_RESOLUTION,
+        scale=1,
+    ):
         self.w = w
-        self.cylinder_resolution = cylinder_resolution
+        self.resolution = resolution
         self.scale = scale
+        self.material_config = material_config
 
     def realize(self, polytwister):
         parts = self.traverse_root(polytwister["tree"])
 
-        bpy.ops.material.new()
-        material = bpy.data.materials[-1]
+        material = make_material_from_config(self.material_config)
 
         for part in parts:
             deselect_all()
@@ -235,7 +259,7 @@ class _Realizer:
                 self.w,
                 node["zenith"],
                 node["azimuth"],
-                cylinder_resolution=self.cylinder_resolution,
+                cylinder_resolution=self.resolution,
             )
             return bpy.context.object
         elif type_ == "rotated_copies":
@@ -263,12 +287,18 @@ class _Realizer:
             raise ValueError(f'Invalid node type {type_}')
 
 
-def realize(polytwister, w, cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION, scale=1):
-    realizer = _Realizer(w, cylinder_resolution=cylinder_resolution, scale=scale)
+def realize(polytwister, w, resolution=DEFAULT_CYLINDER_RESOLUTION, scale=1):
+    realizer = _Realizer(w, resolution=resolution, scale=scale)
     return realizer.realize(polytwister)
 
 
-def realize_soft_polytwister(polytwister, w, cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION, scale=1):
+def realize_soft_polytwister(
+    polytwister,
+    w,
+    resolution=DEFAULT_CYLINDER_RESOLUTION,
+    material_config=None,
+    scale=1.0,
+):
     obj_path = "tmp.obj"
     subprocess.run(common.PYTHON + [
         "make_soft_polytwister.py",
@@ -276,7 +306,7 @@ def realize_soft_polytwister(polytwister, w, cylinder_resolution=DEFAULT_CYLINDE
         str(w),
         obj_path,
         "--resolution",
-        str(cylinder_resolution),
+        str(resolution),
         "--scale",
         str(scale),
     ], check=True)
@@ -298,28 +328,8 @@ def realize_soft_polytwister(polytwister, w, cylinder_resolution=DEFAULT_CYLINDE
     modifier.octree_depth = 8
     modifier.use_smooth_shade = True
 
-    bpy.ops.material.new()
-    material = bpy.data.materials[-1]
-    bpy.context.object.active_material = material
+    make_material_from_config(material_config)
 
-    principled_bsdf = material.node_tree.nodes["Principled BSDF"]
-    settings = {
-        "Base Color": (0.0634336, 0.493001, 0.8, 1),
-        "Roughness": 0.1,
-        "Transmission": 0.7,
-    }
-    settings = {
-        "Base Color": (0.327, 0.217, 0.595, 1),
-        "Roughness": 0.15,
-        "Subsurface": 0.203,
-        "Subsurface Radius": (0.02, 0.02, 0.02),
-        "Subsurface Color": (0.327, 0.217, 0.595, 1),
-        "Transmission": 0.05,
-        "Clearcoat": 1.0,
-        "Clearcoat Roughness": 0.03,
-    }
-    for key, value in settings.items():
-        principled_bsdf.inputs[key].default_value = value
 
 
 def get_max_distance_from_origin():
@@ -357,7 +367,7 @@ def convert_spherical_to_cartesian(radius, latitude, longitude):
     )
 
 
-def set_up_for_render():
+def set_up_for_render(config):
     """This function does the following:
 
     - Add a camera object and set it to the primary camera of the scene.
@@ -410,10 +420,11 @@ def set_up_for_render():
     world_node_tree = bpy.context.scene.world.node_tree
     nodes = world_node_tree.nodes
     nodes.clear()
-
     background_node = nodes.new(type="ShaderNodeBackground")
     environment_node = nodes.new(type="ShaderNodeTexEnvironment")
-    environment_node.image = bpy.data.images.load("//assets/studio_environment_2k.exr")
+    environment_node.image = bpy.data.images.load(
+        config.get("environment_image", "//assets/studio_environment_2k.exr")
+    )
     output_node = nodes.new(type="ShaderNodeOutputWorld")
     links = world_node_tree.links
     links.new(environment_node.outputs["Color"], background_node.inputs["Color"])
@@ -425,14 +436,16 @@ def set_up_for_render():
     # right, -90 degrees is directly from the left. Latitudes are
     # absolute.
     light_specs = [
-        # Key light
+        # Key light illuminates most of the front of the object
         {"latitude": 40, "longitude": -50, "power": 900, "radius": 5.0},
-        # Fill light
-        {"latitude": 0, "longitude": 50, "power": 300, "radius": 5.0},
-        # Back light
+        # Fill light gently illuminates the shadows left by the key light
+        # Don't make this too strong, shadows are good
+        {"latitude": 0, "longitude": 50, "power": 200, "radius": 5.0},
+        # Back light ensures the back of the object is not too dark
         {"latitude": -20, "longitude": 180 + 45, "power": 400, "radius": 15.0},
     ]
-    power_multiplier = 0.3
+    # The above power settings were adjusted before I added in an HDRI environment.
+    power_multiplier = 0.2
     distance = 10.0
 
     for light_spec in light_specs:
@@ -461,7 +474,7 @@ def set_up_for_render():
         bpy.context.scene.render.resolution_x,
         bpy.context.scene.render.resolution_y,
     ])
-    resolution = 1080
+    resolution = config.get("resolution", 1080)
     bpy.context.scene.render.resolution_x = resolution
     bpy.context.scene.render.resolution_y = resolution
 
@@ -475,8 +488,8 @@ def set_up_for_render():
 
     # Greatly reduce the sample count. OpenImageDenoise is on by default,
     # and it does an excellent job.
-    bpy.context.scene.cycles.samples = 128
-    bpy.context.scene.cycles.preview_samples = 16
+    bpy.context.scene.cycles.samples = config.get("samples", 128)
+    bpy.context.scene.cycles.preview_samples = config.get("preview_samples", 16)
 
     # Improve contrast.
     bpy.context.scene.view_settings.look = "High Contrast"
@@ -491,11 +504,10 @@ def main():
             f"{major}.{minor}.{patch}. Errors may occur."
         )
 
-    # Delete the default objects.
-    bpy.ops.object.select_all(action="SELECT")
-    bpy.ops.object.delete(use_global=False)
-
-    set_up_for_render()
+    all_polytwisters = (
+        hard_polytwisters.ALL_HARD_POLYTWISTERS
+        + soft_polytwisters.ALL_SOFT_POLYTWISTERS
+    )
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -531,15 +543,33 @@ def main():
         ),
     )
     parser.add_argument(
-        "-m",
         "--metadata-out",
         type=str,
-        help="If specified, write out a JSON file with information about the cross section."
+        help=(
+            "If specified, write out a JSON file with information about the cross section. This is "
+            "for internal use to compute the max distance from the origin."
+        )
     )
     parser.add_argument(
         "--mesh-out",
         type=str,
         help="If specified, write out a mesh file. Only .stl is supported."
+    )
+    parser.add_argument(
+        "-c",
+        "--config",
+        type=str,
+        help=(
+            "JSON string for render configuration."
+        ),
+    )
+    parser.add_argument(
+        "-cf",
+        "--config-file",
+        type=str,
+        help=(
+            "JSON file for render configuration."
+        ),
     )
 
     argv = sys.argv
@@ -554,33 +584,47 @@ def main():
     polytwister_name = args.polytwister
     polytwister_name = polytwister_name.replace("_", " ")
 
+    if args.config is not None:
+        config = json.loads(args.config)
+    elif args.config_file is not None:
+        with open(args.config_file) as file:
+            config = json.load(file)
+    else:
+        config = {}
+
+    polytwister_config = config.get("defaults", {})
+    for candidate in config["polytwisters"]:
+        # hack, sorry
+        if candidate["name"].replace("_", " ") == polytwister_name:
+            polytwister_config.update(candidate)
+
     kwargs = {
         "w": args.w,
-        "cylinder_resolution": args.resolution,
         "scale": args.scale,
+        "material_config": config.get("material", None),
     }
 
-    all_polytwisters = (
-        hard_polytwisters.ALL_HARD_POLYTWISTERS
-        + soft_polytwisters.ALL_SOFT_POLYTWISTERS
-    )
+    # Delete the default objects.
+    bpy.ops.object.select_all(action="SELECT")
+    bpy.ops.object.delete(use_global=False)
 
-    if polytwister_name == "all":
-        for i, polytwister in enumerate(all_polytwisters):
-            realize(polytwister, **kwargs)
-            bpy.ops.transform.translate(value=(i * args.spacing, 0, 0))
+    render_config = config.get("render", {})
+    set_up_for_render(render_config)
+
+    for polytwister in all_polytwisters:
+        if polytwister_name in polytwister["names"]:
+            break
     else:
-        for polytwister in all_polytwisters:
-            if polytwister_name in polytwister["names"]:
-                break
-        else:
-            raise ValueError(f'Polytwister "{polytwister_name}" not found.')
-        if polytwister["type"] == "hard":
-            realize(polytwister, **kwargs)
-        elif polytwister["type"] == "soft":
-            realize_soft_polytwister(polytwister, **kwargs)
-        else:
-            raise ValueError("Invalid polytwister type")
+        raise ValueError(f'Polytwister "{polytwister_name}" not found.')
+
+    if polytwister["type"] == "hard":
+        resolution = polytwister_config.get("cycloplane_resolution", DEFAULT_CYLINDER_RESOLUTION)
+        realize(polytwister, resolution=resolution, **kwargs)
+    elif polytwister["type"] == "soft":
+        resolution = polytwister_config.get("ring_resolution", DEFAULT_CYLINDER_RESOLUTION)
+        realize_soft_polytwister(polytwister, resolution=resolution, **kwargs)
+    else:
+        raise ValueError("Invalid polytwister type")
 
     if args.normalize:
         max_distance_from_origin = get_max_distance_from_origin()

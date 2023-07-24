@@ -1,0 +1,29 @@
+{
+  "defaults": {
+    "cycloplane_resolution": 150,
+    "ring_resolution": 400,
+  },
+  "polytwisters": [
+    {
+      "name": "soft_cubetwister",
+      "material": {
+        "Base Color": [0.0634336, 0.493001, 0.8, 1],
+        "Roughness": 0.1,
+        "Transmission": 0.7
+      }
+    },
+    {
+      "name": "soft_tetratwister",
+      "material": {
+        "Base Color": [0.327, 0.217, 0.595, 1],
+        "Roughness": 0.15,
+        "Subsurface": 0.203,
+        "Subsurface Radius": [0.02, 0.02, 0.02],
+        "Subsurface Color": [0.327, 0.217, 0.595, 1],
+        "Transmission": 0.05,
+        "Clearcoat": 1.0,
+        "Clearcoat Roughness": 0.03
+      }
+    }
+  ]
+}
