@@ -161,11 +161,14 @@ def main():
 
     try:
         polytwister = args.polytwister
-        # temporary for soft polytwisters, will generalize to hard ones later
-        # scale, max_w = get_scale_and_max_w(polytwister)
-        scale = 1.0
-        max_w = 1.0
-        resolution = 450
+        # Stupid hack to change settings for soft vs. hard polytwisters
+        if "soft" in polytwister:
+            scale = 1.0
+            max_w = 1.0
+            resolution = 450
+        else:
+            scale, max_w = get_scale_and_max_w(polytwister)
+            resolution = 200
 
         render_animation(
             polytwister,
