@@ -8,12 +8,15 @@ system = platform.system()
 if system == "Darwin":
     BLENDER = "/Applications/Blender.app/Contents/MacOS/Blender"
     BLENDER_ROOT = None
+    PYTHON = ["python3"]
 elif system == "Windows":
     BLENDER_ROOT = pathlib.Path("C:\\Program Files\\Blender Foundation\\Blender 3.3\\")
     BLENDER = str(BLENDER_ROOT / "blender.exe")
+    PYTHON = ["py", "-3"]
 else:
     BLENDER = "blender"
     BLENDER_ROOT = None
+    PYTHON = ["python3"]
 BLENDER_SCRIPT = pathlib.Path(__file__).resolve().parent / "make_polytwister.py"
 
 

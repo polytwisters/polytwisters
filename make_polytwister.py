@@ -269,9 +269,7 @@ def realize(polytwister, w, cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION, sca
 
 def realize_soft_polytwister(polytwister, w, cylinder_resolution=DEFAULT_CYLINDER_RESOLUTION, scale=1):
     obj_path = "tmp.obj"
-    subprocess.run([
-        "py",
-        "-3",
+    subprocess.run(common.PYTHON + [
         "make_soft_polytwister.py",
         polytwister["names"][0],
         str(w),
