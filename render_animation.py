@@ -11,7 +11,7 @@ import common
 
 def render_frame(args, file_name):
     out_prefix = "out"
-    common.run_script(["-o", out_prefix, "-f", "1"], args)
+    common.run_script(["-o", "//" + out_prefix, "-f", "1"], args)
     out_file = out_prefix + "0001.png"
     pathlib.Path(out_file).rename(file_name)
 
@@ -125,8 +125,8 @@ def render_animation(
     aren't blank then the max W is too small and the animation will
     be cut off.
     """
-    directory = pathlib.Path("out") / polytwister / "transparent_frames"
-    directory.mkdir(exist_ok=True)
+    directory = common.ROOT / "out" / polytwister / "transparent_frames"
+    directory.mkdir(parents=True, exist_ok=True)
 
     remaining_frames = list(range(1, num_frames - 1))
     frame_order = []
@@ -161,13 +161,17 @@ def main():
 
     try:
         polytwister = args.polytwister
-        scale, max_w = get_scale_and_max_w(polytwister)
+        # temporary for soft polytwisters, will generalize to hard ones later
+        # scale, max_w = get_scale_and_max_w(polytwister)
+        scale = 1.0
+        max_w = 1.0
+        resolution = 450
 
         render_animation(
             polytwister,
             max_w=max_w,
             num_frames=args.num_frames,
-            additional_args=["--scale", str(scale), "--resolution", "128"],
+            additional_args=["--scale", str(scale), "--resolution", str(resolution)],
         )
     finally:
         end_time = time.time()

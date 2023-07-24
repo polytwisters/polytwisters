@@ -2,12 +2,14 @@ import pathlib
 import platform
 import subprocess
 
+ROOT = pathlib.Path(__file__).resolve().parent
+
 system = platform.system()
 if system == "Darwin":
     BLENDER = "/Applications/Blender.app/Contents/MacOS/Blender"
     BLENDER_ROOT = None
 elif system == "Windows":
-    BLENDER_ROOT = pathlib.WindowsPath("C:/Program Files/Blender Foundation/Blender 3.3/3.3")
+    BLENDER_ROOT = pathlib.Path("C:\\Program Files\\Blender Foundation\\Blender 3.3\\")
     BLENDER = str(BLENDER_ROOT / "blender.exe")
 else:
     BLENDER = "blender"
