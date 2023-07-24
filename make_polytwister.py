@@ -14,6 +14,7 @@ directory = os.path.dirname(bpy.data.filepath)
 if directory not in sys.path:
     sys.path.append(directory)
 
+import common
 import hard_polytwisters
 import soft_polytwisters
 
