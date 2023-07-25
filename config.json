@@ -42,6 +42,13 @@
         "Subsurface Color": [0.144, 0.0, 0.0, 1],
         "Roughness": 0.210
       }
+    },
+    {
+      "name": "soft_icosatwister",
+      "material": {
+        "Base Color": [0.234, 0.910, 0.386, 1],
+        "Roughness": 0.1
+      }
     }
   ]
 }
