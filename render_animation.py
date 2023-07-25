@@ -11,7 +11,7 @@ import common
 
 def render_frame(args, file_name):
     out_prefix = "out"
-    common.run_script(["-o", "//" + out_prefix, "-f", "1"], args)
+    common.run_script(common.MAKE_POLYTWISTER_SCRIPT, ["-o", "//" + out_prefix, "-f", "1"], args)
     out_file = out_prefix + "0001.png"
     pathlib.Path(out_file).rename(file_name)
 
@@ -174,7 +174,7 @@ def main():
             polytwister,
             max_w=max_w,
             num_frames=args.num_frames,
-            additional_args=["--scale", str(scale), "--resolution", str(resolution)],
+            additional_args=["--scale", str(scale)],
         )
     finally:
         end_time = time.time()
