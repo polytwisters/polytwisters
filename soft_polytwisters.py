@@ -131,9 +131,10 @@ def get_soft_octatwister():
 
 
 def get_soft_dodecatwister():
+    points = normalize_points(DODECAHEDRON_VERTICES)
     return {
         "names": ["soft dodecatwister"],
-        "points": normalize_points(DODECAHEDRON_VERTICES),
+        "points": orient_along_x_axis(DODECAHEDRON_FACE_CENTER, points),
     }
 
 

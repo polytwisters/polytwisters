@@ -32,6 +32,16 @@
         "Metallic": 1.0,
         "Roughness": 0.079
       }
+    },
+    {
+      "name": "soft_dodecatwister",
+      "material": {
+        "Base Color": [0.144, 0.0, 0.0, 1],
+        "Subsurface": 0.792,
+        "Subsurface Radius": [0.1, 0.1, 0.1],
+        "Subsurface Color": [0.144, 0.0, 0.0, 1],
+        "Roughness": 0.210
+      }
     }
   ]
 }
