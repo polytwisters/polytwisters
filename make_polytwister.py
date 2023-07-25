@@ -421,7 +421,7 @@ def set_up_for_render(config):
     nodes = world_node_tree.nodes
     nodes.clear()
     background_node = nodes.new(type="ShaderNodeBackground")
-    background_node.inputs["Strength"].default_value = 0.5
+    background_node.inputs["Strength"].default_value = config.get("environment_strength", 0.5)
     environment_node = nodes.new(type="ShaderNodeTexEnvironment")
     environment_node.image = bpy.data.images.load(
         config.get("environment_image", "//assets/studio_environment_2k.exr")
