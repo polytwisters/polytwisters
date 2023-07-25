@@ -299,7 +299,6 @@ def realize_soft_polytwister(
     material_config=None,
     scale=1.0,
 ):
-    print(resolution)
     obj_path = "tmp.obj"
     subprocess.run(common.PYTHON + [
         "make_soft_polytwister.py",

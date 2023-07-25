@@ -174,7 +174,7 @@ def main():
             polytwister,
             max_w=max_w,
             num_frames=args.num_frames,
-            additional_args=["--scale", str(scale), "--resolution", str(resolution)],
+            additional_args=["--scale", str(scale)],
         )
     finally:
         end_time = time.time()
