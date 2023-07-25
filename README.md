@@ -6,7 +6,7 @@ This repository is a project to clean up and port the original POV-Ray code (unp
 
 ## Running the scripts
 
-This has only been tested on macOS, but should also work on Linux. You must have Blender installed, and ffmpeg and ImageMagick if you want to make a video.
+Tested on macOS, Linux, and Windows. You must have Blender installed, and ffmpeg and ImageMagick if you want to make a video.
 
 To view a single cross section in the Blender GUI:
 
