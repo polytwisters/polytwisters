@@ -1,17 +1,9 @@
 {
   "defaults": {
     "cycloplane_resolution": 150,
-    "ring_resolution": 400,
+    "ring_resolution": 400
   },
   "polytwisters": [
-    {
-      "name": "soft_cubetwister",
-      "material": {
-        "Base Color": [0.0634336, 0.493001, 0.8, 1],
-        "Roughness": 0.1,
-        "Transmission": 0.7
-      }
-    },
     {
       "name": "soft_tetratwister",
       "material": {
@@ -23,6 +15,22 @@
         "Transmission": 0.05,
         "Clearcoat": 1.0,
         "Clearcoat Roughness": 0.03
+      }
+    },
+    {
+      "name": "soft_cubetwister",
+      "material": {
+        "Base Color": [0.0634336, 0.493001, 0.8, 1],
+        "Roughness": 0.1,
+        "Transmission": 0.7
+      }
+    },
+    {
+      "name": "soft_octatwister",
+      "material": {
+        "Base Color": [0.8, 0.521, 0.0, 1],
+        "Metallic": 1.0,
+        "Roughness": 0.079
       }
     }
   ]

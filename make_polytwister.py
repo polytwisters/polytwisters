@@ -299,6 +299,7 @@ def realize_soft_polytwister(
     material_config=None,
     scale=1.0,
 ):
+    print(resolution)
     obj_path = "tmp.obj"
     subprocess.run(common.PYTHON + [
         "make_soft_polytwister.py",
@@ -421,6 +422,7 @@ def set_up_for_render(config):
     nodes = world_node_tree.nodes
     nodes.clear()
     background_node = nodes.new(type="ShaderNodeBackground")
+    background_node.inputs["Strength"].default_value = 0.5
     environment_node = nodes.new(type="ShaderNodeTexEnvironment")
     environment_node.image = bpy.data.images.load(
         config.get("environment_image", "//assets/studio_environment_2k.exr")
@@ -437,15 +439,16 @@ def set_up_for_render(config):
     # absolute.
     light_specs = [
         # Key light illuminates most of the front of the object
-        {"latitude": 40, "longitude": -50, "power": 900, "radius": 5.0},
+        {"latitude": 10, "longitude": -50, "power": 900, "radius": 5.0},
         # Fill light gently illuminates the shadows left by the key light
         # Don't make this too strong, shadows are good
         {"latitude": 0, "longitude": 50, "power": 200, "radius": 5.0},
         # Back light ensures the back of the object is not too dark
-        {"latitude": -20, "longitude": 180 + 45, "power": 400, "radius": 15.0},
+        # Generally rim-type backlighting doesn't look great on polytwisters, so keep this subtle
+        {"latitude": 20, "longitude": 180 + 10, "power": 50, "radius": 5.0},
     ]
-    # The above power settings were adjusted before I added in an HDRI environment.
-    power_multiplier = 0.2
+    # If the lights are too bright, then this variable allows dimming all at once.
+    power_multiplier = 1.0
     distance = 10.0
 
     for light_spec in light_specs:
@@ -590,7 +593,8 @@ def main():
         with open(args.config_file) as file:
             config = json.load(file)
     else:
-        config = {}
+        with open("config.json") as file:
+            config = json.load(file)
 
     polytwister_config = config.get("defaults", {})
     for candidate in config["polytwisters"]:
@@ -601,14 +605,14 @@ def main():
     kwargs = {
         "w": args.w,
         "scale": args.scale,
-        "material_config": config.get("material", None),
+        "material_config": polytwister_config.get("material", None),
     }
 
     # Delete the default objects.
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
 
-    render_config = config.get("render", {})
+    render_config = polytwister_config.get("render", {})
     set_up_for_render(render_config)
 
     for polytwister in all_polytwisters:
