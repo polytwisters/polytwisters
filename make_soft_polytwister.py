@@ -100,7 +100,7 @@ def get_cross_section(hull, w):
                     p = p_1 + (p_2 - p_1) * t
                     # Discard the w-coordinate to project onto the 3-space.
                     cross_section_points.append(p[:-1])
-    if len(cross_section_points) == 0:
+    if len(cross_section_points) < 4:
         return None
     # Dimensions: point, 3D coordinate
     cross_section_points = np.stack(cross_section_points)
@@ -111,7 +111,10 @@ def get_cross_section(hull, w):
         [0, 1, 0],
     ])
     cross_section_points = (rotation @ cross_section_points.T).T
-    hull_3d = scipy.spatial.ConvexHull(cross_section_points)
+    try:
+        hull_3d = scipy.spatial.ConvexHull(cross_section_points)
+    except scipy.spatial.QhullError:
+        return None
     return hull_3d
 
 
