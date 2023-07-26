@@ -259,7 +259,7 @@ class _Realizer:
                 self.w,
                 node["zenith"],
                 node["azimuth"],
-                cylinder_resolution=self.resolution,
+                resolution=self.resolution,
             )
             return bpy.context.object
         elif type_ == "rotated_copies":
@@ -287,8 +287,8 @@ class _Realizer:
             raise ValueError(f'Invalid node type {type_}')
 
 
-def realize(polytwister, w, resolution=DEFAULT_CYLINDER_RESOLUTION, scale=1):
-    realizer = _Realizer(w, resolution=resolution, scale=scale)
+def realize(polytwister, w, resolution=DEFAULT_CYLINDER_RESOLUTION, scale=1, material_config=None):
+    realizer = _Realizer(w, resolution=resolution, scale=scale, material_config=material_config)
     return realizer.realize(polytwister)
 
 
@@ -611,8 +611,12 @@ def main():
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
 
-    render_config = polytwister_config.get("render", {})
-    set_up_for_render(render_config)
+    # STL export effectively requires that there are no objects except meshes.
+    # If you try to export a scene that has e.g. lights, it will produce the error
+    # "Object does not have geometry data".
+    if args.mesh_out is None:
+        render_config = polytwister_config.get("render", {})
+        set_up_for_render(render_config)
 
     for polytwister in all_polytwisters:
         if polytwister_name in polytwister["names"]:
@@ -643,6 +647,8 @@ def main():
             json.dump(out_json, f)
 
     if args.mesh_out is not None:
+        modifier = bpy.context.object.modifiers[-1]
+        bpy.ops.object.modifier_apply(modifier=modifier.name)
         bpy.ops.export_mesh.stl(filepath=args.mesh_out)
 
 

@@ -1,7 +1,10 @@
 {
   "defaults": {
     "cycloplane_resolution": 150,
-    "ring_resolution": 400
+    "ring_resolution": 400,
+    "render": {
+      "environment_strength": 0.3
+    }
   },
   "polytwisters": [
     {

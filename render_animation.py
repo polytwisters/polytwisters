@@ -11,7 +11,7 @@ import common
 
 def render_frame(args, file_name):
     out_prefix = "out"
-    common.run_script(common.MAKE_POLYTWISTER_SCRIPT, ["-o", "//" + out_prefix, "-f", "1"], args)
+    common.run_blender_script(common.MAKE_POLYTWISTER_SCRIPT, ["-o", "//" + out_prefix, "-f", "1"], args)
     out_file = out_prefix + "0001.png"
     pathlib.Path(out_file).rename(file_name)
 
@@ -19,7 +19,7 @@ def render_frame(args, file_name):
 def get_max_distance_from_origin(polytwister, w):
     metadata_json = "metadata.json"
     args = [polytwister, str(w), "--metadata-out", metadata_json]
-    common.run_script([], args)
+    common.run_blender_script([], args)
     with open(metadata_json) as f:
         root = json.load(f)
     return root["max_distance_from_origin"]
@@ -146,6 +146,22 @@ def render_animation(
         render_frame(args, str(directory / frame_names[frame_index]))
 
 
+def render_animation_with_proper_scaling(polytwister, num_frames):
+    # Stupid hack to change settings for soft vs. hard polytwisters
+    if "soft" in polytwister:
+        scale = 1.0
+        max_w = 1.0
+    else:
+        scale, max_w = get_scale_and_max_w(polytwister)
+
+    render_animation(
+        polytwister,
+        max_w=max_w,
+        num_frames=num_frames,
+        additional_args=["--scale", str(scale)],
+    )
+
+
 def main():
     logging.basicConfig(level=logging.DEBUG)
 
@@ -160,22 +176,7 @@ def main():
     start_time = time.time()
 
     try:
-        polytwister = args.polytwister
-        # Stupid hack to change settings for soft vs. hard polytwisters
-        if "soft" in polytwister:
-            scale = 1.0
-            max_w = 1.0
-            resolution = 450
-        else:
-            scale, max_w = get_scale_and_max_w(polytwister)
-            resolution = 200
-
-        render_animation(
-            polytwister,
-            max_w=max_w,
-            num_frames=args.num_frames,
-            additional_args=["--scale", str(scale)],
-        )
+        render_animation_with_proper_scaling(args.polytwister, args.num_frames)
     finally:
         end_time = time.time()
         duration_in_seconds = int(end_time - start_time)

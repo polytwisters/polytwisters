@@ -18,7 +18,7 @@ def main():
             "--mesh-out",
             str(out_directory / f"{name}_{w:.5}.stl"),
         ]
-        common.run_script([], args)
+        common.run_blender_script([], args)
         print(f'Polytwister "{name}" exported ({i + 1}/{len(polytwisters.ALL_HARD_POLYTWISTERS)})')
 
 

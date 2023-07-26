@@ -146,9 +146,12 @@ def get_soft_icosatwister():
     }
 
 
-def get_soft_dyadic_twister(n):
+def get_soft_dyadic_twister(n, special_names=None):
+    names = [f"order-{n} soft dyadic twister"]
+    if special_names is not None:
+        names = special_names + names
     return {
-        "names": [f"order-{n} soft dyadic twister"],
+        "names": names,
         "points": [
             (0, np.cos(2 * np.pi * i / n), np.sin(2 * np.pi * i / n))
             for i in range(n)
@@ -157,6 +160,7 @@ def get_soft_dyadic_twister(n):
 
 
 ALL_SOFT_POLYTWISTERS = [
+    get_soft_dyadic_twister(2, ["duospindle"]),
     get_soft_dyadic_twister(3),
     get_soft_dyadic_twister(4),
     get_soft_dyadic_twister(5),

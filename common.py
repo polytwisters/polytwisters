@@ -17,12 +17,23 @@ else:
     BLENDER = "blender"
     BLENDER_ROOT = None
     PYTHON = ["python3"]
-MAKE_POLYTWISTER_SCRIPT = pathlib.Path(__file__).resolve().parent / "make_polytwister.py"
+
+ROOT = pathlib.Path(__file__).resolve().parent
+
+MAKE_POLYTWISTER_SCRIPT = ROOT / "make_polytwister.py"
+RENDER_ANIMATION_SCRIPT = ROOT / "render_animation.py"
+MAKE_VIDEO_SCRIPT = ROOT / "make_video.py"
 
 
-def run_script(script_path, blender_args, script_args, interactive=False):
+def blender_command(script_path, blender_args, script_args, interactive=False):
     blender = [BLENDER]
     if not interactive:
         blender.append("-b")
     command = blender + ["--python", script_path]
-    subprocess.run(command + blender_args + ["--"] + script_args, check=True)
+    command += blender_args + ["--"] + script_args
+    return command
+
+
+def run_blender_script(script_path, blender_args, script_args, interactive=False):
+    command = blender_command(script_path, blender_args, script_args, interactive=interactive)
+    subprocess.run(command, check=True)
