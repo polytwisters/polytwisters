@@ -26,6 +26,9 @@ def main():
                     gui.Slider((-1.0, 1.0), 0.0, resolution=0.0, orientation="horizontal", key="w"),
                 ],
                 [
+                    gui.Checkbox("Normalize size", default=True, key="normalize"),
+                ],
+                [
                     gui.Button("Open section in Blender"),
                     gui.In(key="mesh_file", visible=False, enable_events=True),
                     gui.FileSaveAs(
@@ -86,10 +89,11 @@ def main():
         animation_folder = values["animation_folder"]
         if event == "Open section in Blender":
             window.close()
+            options = ["--normalize"] if values["normalize"] else []
             common.run_blender_script(
                 common.MAKE_POLYTWISTER_SCRIPT,
                 [],
-                [polytwister_name, str(w)],
+                [polytwister_name, str(w)] + options,
                 interactive=True,
             )
             break
