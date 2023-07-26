@@ -24,8 +24,9 @@ EPSILON = 1e-10
 LARGE = 10e3
 DEFAULT_CYLINDER_RESOLUTION = 64
 
-# Amount by which all polytwisters are scaled to fit nicely in frame.
-DEFAULT_SCALE = 2.0
+# Radius of polytwister's minimum containing sphere.
+# 20cm feels like a good size.
+DEFAULT_SCALE = 20e-2 / 2
 
 
 def deselect_all():
@@ -403,7 +404,8 @@ def set_up_for_render(config):
     projector. See the Blender docs on color management.
     """
 
-    camera_distance = 14.5
+    camera_distance = 1.0
+
     # Just enough angle to see the tops of convex polytwister sections.
     camera_latitude = math.radians(15)
     camera_longitude = math.radians(10)
@@ -415,6 +417,9 @@ def set_up_for_render(config):
         rotation=rotation_to_point_to_origin(camera_location)
     )
     camera = bpy.context.object
+    # Close-up shot with low perspective distortion.
+    camera.data.lens = 85
+    camera.data.display_size = 0.2
     bpy.context.scene.camera = bpy.context.object
 
     world_node_tree = bpy.context.scene.world.node_tree
@@ -438,17 +443,17 @@ def set_up_for_render(config):
     # absolute.
     light_specs = [
         # Key light illuminates most of the front of the object
-        {"latitude": 10, "longitude": -50, "power": 900, "radius": 5.0},
+        {"latitude": 10, "longitude": -50, "power": 100, "radius": 3.0},
         # Fill light gently illuminates the shadows left by the key light
         # Don't make this too strong, shadows are good
-        {"latitude": 0, "longitude": 50, "power": 200, "radius": 5.0},
+        {"latitude": 0, "longitude": 50, "power": 25, "radius": 3.0},
         # Back light ensures the back of the object is not too dark
         # Generally rim-type backlighting doesn't look great on polytwisters, so keep this subtle
-        {"latitude": 20, "longitude": 180 + 10, "power": 50, "radius": 5.0},
+        {"latitude": 20, "longitude": 180 + 10, "power": 50, "radius": 3.0},
     ]
     # If the lights are too bright, then this variable allows dimming all at once.
     power_multiplier = 1.0
-    distance = 10.0
+    distance = 5.0
 
     for light_spec in light_specs:
         latitude = math.radians(light_spec["latitude"])

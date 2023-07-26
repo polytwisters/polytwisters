@@ -52,6 +52,12 @@
         "Base Color": [0.234, 0.910, 0.386, 1],
         "Roughness": 0.1
       }
+    },
+
+    {
+      "name": "bloated_tetratwister",
+      "material": {
+      }
     }
   ]
 }
