@@ -447,9 +447,8 @@ def set_up_for_render(config):
         # Fill light gently illuminates the shadows left by the key light
         # Don't make this too strong, shadows are good
         {"latitude": 0, "longitude": 50, "power": 25, "radius": 3.0},
-        # Back light ensures the back of the object is not too dark
-        # Generally rim-type backlighting doesn't look great on polytwisters, so keep this subtle
-        {"latitude": 20, "longitude": 180 + 10, "power": 50, "radius": 3.0},
+        # I used to have a back light here but it didn't work too well. The HDRI is sufficient for
+        # preventing really dark areas.
     ]
     # If the lights are too bright, then this variable allows dimming all at once.
     power_multiplier = 1.0
