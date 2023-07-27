@@ -53,10 +53,12 @@
         "Roughness": 0.1
       }
     },
-
     {
-      "name": "bloated_tetratwister",
+      "name": "bloated_octatwister",
       "material": {
+        "Base Color": [0.735, 0.436, 1.0, 1],
+        "Roughness": 0.1,
+        "Specular": 0.5
       }
     }
   ]
