@@ -60,6 +60,16 @@
         "Roughness": 0.1,
         "Specular": 0.5
       }
+    },
+    {
+      "name": "bloated_icosatwister",
+      "material": {
+        "Base Color": [0.951, 1.0, 0.8, 1],
+        "Subsurface": 0.210,
+        "Subsurface Radius": [0.01, 0.01, 0.01],
+        "Subsurface Color": [0.889, 0.792, 0.8, 1],
+        "Roughness": 0.121,
+      }
     }
   ]
 }
