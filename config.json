@@ -68,7 +68,7 @@
         "Subsurface": 0.210,
         "Subsurface Radius": [0.01, 0.01, 0.01],
         "Subsurface Color": [0.889, 0.792, 0.8, 1],
-        "Roughness": 0.121,
+        "Roughness": 0.121
       }
     }
   ]
