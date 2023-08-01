@@ -19,7 +19,7 @@ def render_frame(args, file_name):
 def get_max_distance_from_origin(polytwister, w):
     metadata_json = "metadata.json"
     args = [polytwister, str(w), "--metadata-out", metadata_json]
-    common.run_blender_script([], args)
+    common.run_blender_script(common.MAKE_POLYTWISTER_SCRIPT, [], args)
     with open(metadata_json) as f:
         root = json.load(f)
     return root["max_distance_from_origin"]

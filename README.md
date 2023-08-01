@@ -4,9 +4,38 @@
 
 This repository is a project to clean up and port the original POV-Ray code (unpublished) to a modern toolchain using Blender's Python scripting capabilities. Computing the polytwisters as meshes enables professional-quality animations, as well as digital fabrication for realizing physical cross sections.
 
-## Running the scripts
+**This software is in an early stage of development.** You will probably have to make some minor changes to get it working on your machine.
 
-Tested on macOS, Linux, and Windows. You must have Blender installed, and ffmpeg and ImageMagick if you want to make a video.
+## Overview
+
+This software has the following components:
+
+* `hard_polytwisters.py` and `soft_polytwisters.py`, which contain declarative definitions of polytwisters based on the locations of their rings or cycloplanes. These scripts are nearly dependency-free, although `soft_polytwisters.py` requires NumPy.
+* `make_soft_polytwister.py` takes definitions from `soft_polytwisters.py` and renders their cross sections as meshes. It requires SciPy for 4D and 3D convex hull computation.
+* `make_polytwister.py` uses all of the above to create a Blender project file for a given cross section. It can open up Blender interactively, can render an image, or export an STL mesh. It must be run in Blender (which can be done using Blender's command-line options).
+** It runs `make_soft_polytwister` as a subprocess using the system Python, because getting the SciPy dependency into the Blender Python environment is a massive pain.
+* `render_animation.py` repeatedly calls `make_polytwister.py` to render a full animation as a sequence of PNG files. It is to be run with the system Python.
+** Why call Blender for each frame rather than using Blender's built-in animation feature? The main reason is for rendering frames out of order so the time resolution progressively increases. But I may change this in the future.
+* `make_video.py` takes the output of `render_animation`, adds a background to each frame, and renders an MP4 video file.
+* `gui.py` wraps up all the high-level features in a very crude GUI. It requires PySimpleGUI and a working Tkinter installation.
+
+## Basic usage with GUI
+
+I've managed to run this on macOS, Linux, and Windows. Requirements:
+
+* Blender 3.3
+* The following Python deps: `pip install numpy scipy PySimpleGUI`
+* A working version of Tkinter if you want to run a simple GUI. See here: https://stackoverflow.com/a/76105219.
+* ffmpeg and ImageMagick if video export is desired.
+
+To run GUI:
+
+```
+python3 gui.py  # macOS
+py -3 gui.py  # Windows
+```
+
+## Advanced usage
 
 To view a single cross section in the Blender GUI:
 
