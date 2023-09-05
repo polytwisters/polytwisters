@@ -151,6 +151,13 @@ for i in range(5):
     )
 
 
+def cycloplane_from_cartesian(point):
+    x, y, z = point
+    zenith = math.atan2(math.hypot(x, y), z)
+    azimuth = math.atan2(y, x)
+    return cycloplane(zenith, azimuth)
+
+
 def get_dyadic_twister(n):
     return {
         "names": [f"order-{n} dyadic twister"],
