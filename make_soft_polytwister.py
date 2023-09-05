@@ -1,3 +1,4 @@
+import collections
 import argparse
 import itertools
 
@@ -118,7 +119,36 @@ def get_cross_section(hull, w):
     return hull_3d
 
 
+MockHull = collections.namedtuple("MockHull", "points, simplices")
+
+
+def merge_hulls(hulls):
+    points = []
+    simplices = []
+    offset = 0
+    for hull in hulls:
+        points.append(hull.points)
+        simplices.append(hull.simplices + offset)
+        num_points = hull.points.shape[0]
+        offset += num_points
+    return MockHull(
+        np.concatenate(points, axis=0),
+        np.concatenate(simplices, axis=0),
+    )
+
+
+
 def get_soft_polytwister_cross_section(soft_polytwister_spec, w, resolution=200):
+    if soft_polytwister_spec.get("compound", False):
+        components = []
+        for component_points in soft_polytwister_spec["pieces"]:
+            component = get_soft_polytwister(component_points, resolution)
+            component_cross_section = get_cross_section(component, w)
+            if component_cross_section is not None:
+                components.append(component_cross_section)
+        if len(components) == 0:
+            return None
+        return merge_hulls(components)
     soft_polytwister = get_soft_polytwister(soft_polytwister_spec["points"], resolution)
     return get_cross_section(soft_polytwister, w)
 
@@ -177,8 +207,7 @@ def main():
     else:
         raise ValueError(f'Polytwister "{polytwister_name}" not found.')
 
-    soft_polytwister = get_soft_polytwister(polytwister["points"], resolution)
-    cross_section = get_cross_section(soft_polytwister, args.w)
+    cross_section = get_soft_polytwister_cross_section(polytwister, args.w, resolution)
     with open(args.obj_out, "w") as f:
         if cross_section is not None:
             write_hull_as_obj(cross_section, f)
