@@ -3,7 +3,8 @@
     "cycloplane_resolution": 150,
     "ring_resolution": 400,
     "render": {
-      "environment_strength": 0.3
+      "environment_strength": 0.3,
+      "samples": 16
     }
   },
   "polytwisters": [
@@ -64,10 +65,10 @@
     {
       "name": "bloated_icosatwister",
       "material": {
-        "Base Color": [0.951, 1.0, 0.8, 1],
+        "Base Color": [1.0, 0.237, 0.099, 1],
         "Subsurface": 0.210,
-        "Subsurface Radius": [0.01, 0.01, 0.01],
-        "Subsurface Color": [0.889, 0.792, 0.8, 1],
+        "Subsurface Radius": [0.05, 0.01, 0.01],
+        "Subsurface Color": [0.889, 0.628, 0.462, 1],
         "Roughness": 0.121
       }
     }

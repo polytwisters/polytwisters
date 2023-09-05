@@ -8,7 +8,7 @@ This repository is a project to clean up and port the original POV-Ray code (unp
 
 ## Overview
 
-This software has the following components:
+This software has many components due to some feature creep. However, those components are fairly cleanly separated. Here they are from most essential to least essential:
 
 * `hard_polytwisters.py` and `soft_polytwisters.py`, which contain declarative definitions of polytwisters based on the locations of their rings or cycloplanes. These scripts are nearly dependency-free, although `soft_polytwisters.py` requires NumPy.
 * `make_soft_polytwister.py` takes definitions from `soft_polytwisters.py` and renders their cross sections as meshes. It requires SciPy for 4D and 3D convex hull computation.
@@ -18,13 +18,14 @@ This software has the following components:
 ** Why call Blender for each frame rather than using Blender's built-in animation feature? The main reason is for rendering frames out of order so the time resolution progressively increases. But I may change this in the future.
 * `make_video.py` takes the output of `render_animation`, adds a background to each frame, and renders an MP4 video file.
 * `gui.py` wraps up all the high-level features in a very crude GUI. It requires PySimpleGUI and a working Tkinter installation.
+* `notify.py` allows you to use Twilio to send SMS to your phone. It's completely optional.
 
 ## Basic usage with GUI
 
 I've managed to run this on macOS, Linux, and Windows. Requirements:
 
 * Blender 3.3
-* The following Python deps: `pip install numpy scipy PySimpleGUI`
+* The following Python deps: `pip install numpy scipy PySimpleGUI twilio`. Last two are optional.
 * A working version of Tkinter if you want to run a simple GUI. See here: https://stackoverflow.com/a/76105219.
 * ffmpeg and ImageMagick if video export is desired.
 

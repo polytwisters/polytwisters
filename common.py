@@ -23,6 +23,7 @@ ROOT = pathlib.Path(__file__).resolve().parent
 MAKE_POLYTWISTER_SCRIPT = ROOT / "make_polytwister.py"
 RENDER_ANIMATION_SCRIPT = ROOT / "render_animation.py"
 MAKE_VIDEO_SCRIPT = ROOT / "make_video.py"
+NOTIFY_SCRIPT = ROOT / "notify.py"
 
 
 def blender_command(script_path, blender_args, script_args, interactive=False):
