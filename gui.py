@@ -49,6 +49,9 @@ def main():
                     gui.Checkbox("Export video when done", default=True, key="export_video_when_done"),
                 ],
                 [
+                    gui.Checkbox("Send SMS when done", default=True, key="send_sms_when_done"),
+                ],
+                [
                     gui.Button("Render animation"),
                 ],
             ]),
@@ -116,6 +119,11 @@ def main():
                     sys.executable,
                     common.MAKE_VIDEO_SCRIPT,
                     str(common.ROOT / "out" / polytwister_name)
+                ], check=True)
+            if values["send_sms_when_done"]:
+                subprocess.run([
+                    sys.executable,
+                    common.NOTIFY_SCRIPT,
                 ], check=True)
             break
         elif event == "video_file":
