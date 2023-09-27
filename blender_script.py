@@ -87,211 +87,19 @@ def make_material_from_config(config):
     return material
 
 
-def create_cycloplane(
-    w,
-    zenith,
-    azimuth,
-    resolution=DEFAULT_CYLINDER_RESOLUTION,
-):
-    """Create a cross section of a cycloplane constructed from a Hopf fiber.
-    w is the cross section coordinate, zenith is the angle from the north pole,
-    and azimuth is another word for longitude. Said point is transformed via
-    the preimage of the Hopf fibration into a unit circle, then the cycloplane
-    is constructed from that unit circle.
-
-    See "cylli" macro in Bowers' original code.
-    """
-
-    theta = zenith / 2
-    phi = azimuth
-
-    if abs(theta - math.pi / 2) < EPSILON:
-        return _create_south_pole_cycloplane(w)
-
-    deselect_all()
-    bpy.ops.mesh.primitive_cylinder_add(
-        radius=1,
-        depth=LARGE,
-        vertices=resolution,
-        location=(0, 0, 0),
-        scale=(1, 1, 1),
-    )
-
-    # The cylinder is along the Z-axis. Rotate about the X-axis to
-    # change Z-axis to Y-axis and match with the original "cyl" object
-    # in Bowers' POV-Ray code.
-    rotate_about_axis("X", math.pi / 2)
-
-    scale_x = 1 / math.cos(theta)
-    bpy.ops.transform.resize(value=(scale_x, 1, 1))
-    translate_x = w * math.tan(theta)
-    bpy.ops.transform.translate(value=(translate_x, 0, 0))
-
-    # In Bowers' code this rotation about the X-axis comes before the
-    # translation. It doesn't matter because translation along the X-axis
-    # commutes with rotations about the X-axis, but I prefer to group the
-    # rotations together.
-    rotate_about_axis("X", -theta)
-    rotate_about_axis("Y", phi)
-
-    return bpy.context.object
-
-
-def create_empty_mesh():
-    bpy.ops.mesh.primitive_cylinder_add()
-    bpy.ops.object.editmode_toggle()
-    bpy.ops.mesh.delete(type="VERT")
-    bpy.ops.object.editmode_toggle()
-
-
-def _create_south_pole_cycloplane(w):
-    """Create the cross section of a cycloplane whose point is located at the
-    south pole."""
-    deselect_all()
-    if abs(w) >= 1:
-        create_empty_mesh()
-    else:
-        bpy.ops.mesh.primitive_cylinder_add(
-            radius=LARGE,
-            depth=2 * math.sqrt(1 - w * w),
-            vertices=32,
-            location=(0, 0, 0),
-            scale=(1, 1, 1),
-        )
-
-        # See comment in create_cycloplane.
-        rotate_about_axis("X", math.pi / 2)
-
-    return bpy.context.object
-
-
-def do_boolean(operation, objects, delete=True):
-    """Given a list of Blender objects, compute a Boolean op of all of
-    them by creating and applying Boolean modifiers on the first object, then
-    optionally deleting the rest of the objects.
-
-    It is assumed that there are no other modifiers on the first object."""
-    first = objects[0]
-    for i, other in enumerate(objects[1:]):
-        deselect_all()
-        first.select_set(True)
-        bpy.context.view_layer.objects.active = first
-        bpy.ops.object.modifier_add(type="BOOLEAN")
-        modifier = bpy.context.object.modifiers[-1]
-        modifier.operation = operation
-        modifier.object = other
-        bpy.ops.object.modifier_apply(modifier=modifier.name)
-
-        if delete:
-            deselect_all()
-            other.select_set(True)
-            bpy.ops.object.delete()
-
-    first.select_set(True)
-    return bpy.context.object
-
-
-def make_rotated_copies(n):
-    copies = []
-    for i in range(n - 1):
-        bpy.ops.object.duplicate()
-        rotate_about_axis("Y", 2 * math.pi / n)
-        copies.append(bpy.context.object)
-    return copies
-
-
 def shade_auto_smooth():
     bpy.ops.object.shade_smooth()
     bpy.context.object.data.use_auto_smooth = True
     bpy.context.object.data.auto_smooth_angle = math.radians(30.0)
 
 
-class _Realizer:
-
-    def __init__(
-        self,
-        w,
-        material_config=None,
-        resolution=DEFAULT_CYLINDER_RESOLUTION,
-        scale=1,
-    ):
-        self.w = w
-        self.resolution = resolution
-        self.scale = scale
-        self.material_config = material_config
-
-    def realize(self, polytwister):
-        parts = self.traverse_root(polytwister["tree"])
-
-        material = make_material_from_config(self.material_config)
-
-        for part in parts:
-            deselect_all()
-            part.select_set(True)
-            bpy.context.view_layer.objects.active = part
-            shade_auto_smooth()
-            bpy.context.object.active_material = material
-
-        group_under_empty(parts)
-        do_scale(DEFAULT_SCALE * self.scale)
-        # Change the polytwister's axis of symmetry from Y to Z so it stands
-        # upright in Blender, purely for aesthetic reasons.
-        rotate_about_axis("X", math.pi / 2)
-
-    def traverse_root(self, node):
-        type_ = node["type"]
-        # If the root node is a union, save some computation time by grouping the
-        # operands under an empty rather than computing the actual union.
-        if type_ == "union":
-            operands = []
-            for node in node["operands"]:
-                child = self.traverse(node)
-                if isinstance(child, list):
-                    operands.extend(child)
-                else:
-                    operands.append(child)
-            return operands
-        return [self.traverse(node)]
-
-    def traverse(self, node):
-        type_ = node["type"]
-        if type_ == "cycloplane":
-            create_cycloplane(
-                self.w,
-                node["zenith"],
-                node["azimuth"],
-                resolution=self.resolution,
-            )
-            return bpy.context.object
-        elif type_ == "rotated_copies":
-            first = self.traverse(node["operand"])
-            return [first] + make_rotated_copies(node["order"])
-        elif type_ == "intersection":
-            operands = []
-            for child in node["operands"]:
-                operand = self.traverse(child)
-                operands.append(operand)
-            return do_boolean("INTERSECT", operands)
-        elif type_ == "difference":
-            operands = []
-            for child in node["operands"]:
-                operand = self.traverse(child)
-                operands.append(operand)
-            return do_boolean("DIFFERENCE", operands)
-        elif type_ == "union":
-            operands = []
-            for child in node["operands"]:
-                operand = self.traverse(child)
-                operands.append(operand)
-            return do_boolean("UNION", operands)
-        else:
-            raise ValueError(f'Invalid node type {type_}')
-
-
-def realize(polytwister, w, resolution=DEFAULT_CYLINDER_RESOLUTION, scale=1, material_config=None):
-    realizer = _Realizer(w, resolution=resolution, scale=scale, material_config=material_config)
-    return realizer.realize(polytwister)
-
+def realize_hard_polytwister(
+    polytwister,
+    w,
+    material_config=None,
+    scale=1.0,
+):
+    pass
 
 def realize_soft_polytwister(
     polytwister,
@@ -330,18 +138,6 @@ def realize_soft_polytwister(
     modifier.use_smooth_shade = True
 
     make_material_from_config(material_config)
-
-
-
-def get_max_distance_from_origin():
-    result = 0.0
-    objects = [bpy.context.object] + list(bpy.context.object.children)
-    for object_ in objects:
-        if object_.data is None:
-            continue
-        for vertex in object_.data.vertices:
-            result = max(result, vertex.co.length)
-    return result
 
 
 def rotation_to_point_to_origin(point):
