@@ -15,8 +15,6 @@ if directory not in sys.path:
     sys.path.append(directory)
 
 import common
-import hard_polytwisters
-import soft_polytwisters
 
 EXPECTED_BLENDER_VERSION = (3, 3)
 
@@ -306,27 +304,10 @@ def main():
             f"{major}.{minor}.{patch}. Errors may occur."
         )
 
-    all_polytwisters = (
-        hard_polytwisters.ALL_HARD_POLYTWISTERS
-        + soft_polytwisters.ALL_SOFT_POLYTWISTERS
-    )
-
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "polytwister",
-        help="Name of the polytwister. For convenience, underscores are replaced with spaces.",
-    )
-    parser.add_argument(
-        "w",
-        type=float,
-        help="W-coordinate of the 3-space where the cross section is taken.",
-    )
-    parser.add_argument(
-        "-r",
-        "--resolution",
-        type=int,
-        default=DEFAULT_CYLINDER_RESOLUTION,
-        help="Number of segments used for cylinders.",
+        "obj_file",
+        help="Input Wavefront OBJ file.",
     )
     parser.add_argument(
         "-n",
@@ -345,32 +326,11 @@ def main():
         ),
     )
     parser.add_argument(
-        "--metadata-out",
-        type=str,
-        help=(
-            "If specified, write out a JSON file with information about the cross section. This is "
-            "for internal use to compute the max distance from the origin."
-        )
-    )
-    parser.add_argument(
-        "--mesh-out",
-        type=str,
-        help="If specified, write out a mesh file. Only .stl is supported."
-    )
-    parser.add_argument(
         "-c",
         "--config",
         type=str,
         help=(
             "JSON string for render configuration."
-        ),
-    )
-    parser.add_argument(
-        "-cf",
-        "--config-file",
-        type=str,
-        help=(
-            "JSON file for render configuration."
         ),
     )
 
@@ -410,46 +370,6 @@ def main():
     # Delete the default objects.
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
-
-    # STL export effectively requires that there are no objects except meshes.
-    # If you try to export a scene that has e.g. lights, it will produce the error
-    # "Object does not have geometry data".
-    if args.mesh_out is None:
-        render_config = polytwister_config.get("render", {})
-        set_up_for_render(render_config)
-
-    for polytwister in all_polytwisters:
-        if polytwister_name in polytwister["names"]:
-            break
-    else:
-        raise ValueError(f'Polytwister "{polytwister_name}" not found.')
-
-    if polytwister["type"] == "hard":
-        resolution = polytwister_config.get("cycloplane_resolution", DEFAULT_CYLINDER_RESOLUTION)
-        realize(polytwister, resolution=resolution, **kwargs)
-    elif polytwister["type"] == "soft":
-        resolution = polytwister_config.get("ring_resolution", DEFAULT_CYLINDER_RESOLUTION)
-        realize_soft_polytwister(polytwister, resolution=resolution, **kwargs)
-    else:
-        raise ValueError("Invalid polytwister type")
-
-    if args.normalize:
-        max_distance_from_origin = get_max_distance_from_origin()
-        if max_distance_from_origin != 0:
-            do_scale(args.scale / max_distance_from_origin)
-
-    if args.metadata_out is not None:
-        with open(args.metadata_out, "w") as f:
-            max_distance_from_origin = get_max_distance_from_origin()
-            out_json = {
-                "max_distance_from_origin": max_distance_from_origin
-            }
-            json.dump(out_json, f)
-
-    if args.mesh_out is not None:
-        modifier = bpy.context.object.modifiers[-1]
-        bpy.ops.object.modifier_apply(modifier=modifier.name)
-        bpy.ops.export_mesh.stl(filepath=args.mesh_out)
 
 
 if __name__ == "__main__":

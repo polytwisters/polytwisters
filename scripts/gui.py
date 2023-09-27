@@ -94,7 +94,7 @@ def main():
             window.close()
             options = ["--normalize"] if values["normalize"] else []
             common.run_blender_script(
-                common.MAKE_POLYTWISTER_SCRIPT,
+                common.BLENDER_SCRIPT,
                 [],
                 [polytwister_name, str(w)] + options,
                 interactive=True,
@@ -103,7 +103,7 @@ def main():
         elif event == "mesh_file":
             window.close()
             common.run_blender_script(
-                common.MAKE_POLYTWISTER_SCRIPT,
+                common.BLENDER_SCRIPT,
                 [],
                 [polytwister_name, str(w), "--mesh-out", mesh_file],
                 interactive=False,

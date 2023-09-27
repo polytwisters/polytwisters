@@ -2,7 +2,9 @@ import pathlib
 import platform
 import subprocess
 
-ROOT = pathlib.Path(__file__).resolve().parent
+SCRIPT_ROOT = pathlib.Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_ROOT.parent
+ROOT = SCRIPT_ROOT  # backward compat
 
 system = platform.system()
 if system == "Darwin":
@@ -18,12 +20,10 @@ else:
     BLENDER_ROOT = None
     PYTHON = ["python3"]
 
-ROOT = pathlib.Path(__file__).resolve().parent
-
-MAKE_POLYTWISTER_SCRIPT = ROOT / "make_polytwister.py"
-RENDER_ANIMATION_SCRIPT = ROOT / "render_animation.py"
-MAKE_VIDEO_SCRIPT = ROOT / "make_video.py"
-NOTIFY_SCRIPT = ROOT / "notify.py"
+BLENDER_SCRIPT = SCRIPT_ROOT / "blender_script.py"
+RENDER_ANIMATION_SCRIPT = SCRIPT_ROOT / "render_animation.py"
+MAKE_VIDEO_SCRIPT = SCRIPT_ROOT / "make_video.py"
+NOTIFY_SCRIPT = SCRIPT_ROOT / "notify.py"
 
 
 def blender_command(script_path, blender_args, script_args, interactive=False):
