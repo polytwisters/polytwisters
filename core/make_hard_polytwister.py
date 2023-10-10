@@ -383,7 +383,10 @@ def main():
         num_digits = int(math.ceil(math.log10(num_frames)))
         for i in range(num_frames):
             logging.debug(f"Rendering frame {i}.")
-            w = -max_w + max_w * 2 * i / (num_frames - 1)
+            # Originally this was -max_w + max_w * 2 * i / (num_frames - 1) so the first frame has
+            # w = -max_w and the final frame has w = max_w, but that results in the first and final
+            # frames being empty, so we leave those out.
+            w = -max_w + max_w * 2 * (i + 1) / (num_frames + 1)
             file_stem = f"out_{str(i).rjust(num_digits, '0')}"
             render_one_frame(w, file_stem, scale=scale)
 

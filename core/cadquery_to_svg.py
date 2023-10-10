@@ -1,3 +1,5 @@
+"""Tools for making 2D vector image renders of CadQuery objects.
+"""
 import math
 from typing import Optional
 
@@ -142,24 +144,30 @@ def export_svg(workplane, normalize=False, additional_scale=1.0):
 
 def export_montage_as_svg(polylines_list: list[Polylines], additional_scale=1.0):
     cell_size = 100.0
+    gap = 20.0
+
     num_cells = len(polylines_list)
     num_rows = int(math.sqrt(num_cells))
     num_columns = num_cells // num_rows
 
+    scale = cell_size * additional_scale / 2
+
     final_polylines = []
     for i, polylines in enumerate(polylines_list):
         row_index, column_index = divmod(i, num_columns)
-        polylines = scale_polylines(polylines, cell_size * additional_scale / 2, cell_size * additional_scale / 2)
+        x_offset = gap + (gap + cell_size) * column_index
+        y_offset = gap + (gap + cell_size) * row_index
+        polylines = scale_polylines(polylines, scale, scale)
         # Flip Y-axis.
         polylines = scale_polylines(polylines, 1.0, -1.0)
         polylines = translate_polylines(polylines, cell_size / 2, cell_size / 2)
-        polylines = translate_polylines(polylines, cell_size * column_index, cell_size * row_index)
+        polylines = translate_polylines(polylines, x_offset, y_offset)
         final_polylines.extend(polylines)
 
     return make_svg_document_from_polylines(
         final_polylines,
-        cell_size * num_columns,
-        cell_size * num_rows,
+        gap + (gap + cell_size) * num_columns,
+        gap + (gap + cell_size) * num_rows,
         stroke_width=1.0,
     )
 
