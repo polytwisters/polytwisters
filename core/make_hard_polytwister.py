@@ -7,7 +7,7 @@ import cadquery
 import cadquery.utils
 
 import hard_polytwisters
-from cadquery_to_svg import export_svg
+from cadquery_to_svg import export_svg, render_as_polylines, export_montage_as_svg
 
 LARGE = 100.0
 EPSILON = 1e-3
@@ -290,6 +290,14 @@ def get_scale_and_max_w(polytwister):
     return scale, max_w_upper_bound
 
 
+def scale_mesh(mesh, scale):
+    vertices, triangles = mesh
+    if len(vertices) == 0:
+        return mesh
+    vertices = [vertex * scale for vertex in vertices]
+    return vertices, triangles
+
+
 def normalize_mesh(mesh):
     vertices, triangles = mesh
     if len(vertices) == 0:
@@ -325,7 +333,7 @@ def main():
         "-f",
         "--format",
         type=str,
-        help="obj (default), svg, svg_debug.",
+        help="obj (default), svg.",
     )
     parser.add_argument(
         "out_dir",
@@ -346,21 +354,24 @@ def main():
     out_dir = pathlib.Path(args.out_dir)
     out_dir.mkdir(exist_ok=True, parents=True)
 
-    def render_one_frame(w, out_file_stem, normalize=False):
+    polylines_list = []
+
+    def render_one_frame(w, out_file_stem, normalize=False, scale=1.0):
         workplane = make_polytwister_cross_section(polytwister, w)
-        if args.format == "svg":
+        if args.format == "svg_montage":
+            polylines_list.append(render_as_polylines(workplane))
+        elif args.format == "svg":
             out_file_name = out_dir / (out_file_stem + ".svg")
-            svg_document = export_svg(workplane, normalize=normalize)
+            svg_document = export_svg(workplane, normalize=normalize, additional_scale=scale)
             with open(out_file_name, "w") as f:
                 f.write(svg_document)
-        elif args.format == "svg_debug":
-            out_file_name = out_dir / (out_file_stem + ".svg")
-            workplane.exportSvg(str(out_file_name))
         else:
             out_file_name = out_dir / (out_file_stem + ".obj")
             mesh = discretize_workplane(workplane)
             if normalize:
                 mesh = normalize_mesh(mesh)
+            if scale != 1.0:
+                mesh = scale_mesh(mesh, scale)
             with open(out_file_name, "w") as f:
                 write_mesh_as_obj(mesh, f)
 
@@ -372,10 +383,13 @@ def main():
         num_digits = int(math.ceil(math.log10(num_frames)))
         for i in range(num_frames):
             logging.debug(f"Rendering frame {i}.")
-            render_one_frame(
-                -max_w + max_w * 2 * i / (num_frames - 1),
-                f"out_{str(i).rjust(num_digits, '0')}",
-            )
+            w = -max_w + max_w * 2 * i / (num_frames - 1)
+            file_stem = f"out_{str(i).rjust(num_digits, '0')}"
+            render_one_frame(w, file_stem, scale=scale)
+
+        if args.format == "svg_montage":
+            with open(out_dir / "montage.svg", "w") as f:
+                f.write(export_montage_as_svg(polylines_list, scale))
 
 
 if __name__ == "__main__":
