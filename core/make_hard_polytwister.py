@@ -17,7 +17,7 @@ import hard_polytwisters
 TOLERANCE = 1e-6
 DISCRETIZATION_TOLERANCE = 1e-3
 
-LARGE = 1000.0
+LARGE = 100.0
 EPSILON = 1e-3
 
 
@@ -48,7 +48,6 @@ def create_cycloplane(w, zenith, azimuth):
 
     See "cylli" macro in Bowers' original code.
     """
-
     theta = zenith / 2
     phi = azimuth
 
@@ -110,8 +109,8 @@ def is_empty(part):
 
 
 def safe_intersect(part_1, part_2):
-    """Compute the intersection of two cadquery.Workplanes, but don't throw an error for empty
-    inputs."""
+    """Compute the intersection of two cadquery.Workplanes, but if the output is empty don't throw
+    an error."""
     try:
         return part_1.intersect(part_2)
     except ValueError:
@@ -139,7 +138,9 @@ def safe_union(part_1, part_2):
 class Realizer:
 
     def __init__(self, w):
-        self.w = w
+        # HACK: CadQuery seems to have some problems with polytwister cross sections at w = 0.
+        # Annoying.
+        self.w = w if abs(w) > EPSILON else EPSILON
 
     def realize(self, polytwister):
         return self.traverse(polytwister["tree"])
@@ -203,7 +204,7 @@ def discretize_workplane(workplane, tolerance=0.1, angular_tolerance=0.1):
         return [], []
     if len(shapes) != 1:
         raise RuntimeError("Workplane has two or more Shapes, this doesn't make sense")
-    shape = shapes[0]
+    shape: cadquery.Compound = shapes[0]
     vertices, triangles = shape.tessellate(tolerance, angular_tolerance)
     return vertices, triangles
 
@@ -265,6 +266,8 @@ def get_scale_and_max_w(polytwister):
     method can be used to find W_max with high accuracy.
     """
     max_distance_from_origin_zero = get_max_distance_from_origin(polytwister, 0.0)
+    if max_distance_from_origin_zero == 0.0:
+        raise ValueError("Cross section at w = 0 is empty, something is wrong.")
     scale = 1 / max_distance_from_origin_zero
     logging.debug(f"Max distance from origin at w = 0: {max_distance_from_origin_zero:.2}")
     logging.debug(f"Scale = {scale:.2}")
@@ -312,8 +315,8 @@ def export_svg(workplane, normalize=False):
 
     hlr = HLRBRep_Algo()
     hlr.Add(shape.wrapped)
-    projectionDir = (-1.75, 1.1, 5)
-    coordinate_system = gp_Ax2(gp_Pnt(), gp_Dir(*projectionDir))
+    projection_direction = (-1.75, 1.1, 5)
+    coordinate_system = gp_Ax2(gp_Pnt(), gp_Dir(*projection_direction))
     projector = HLRAlgo_Projector(coordinate_system)
     hlr.Projector(projector)
     hlr.Update()
@@ -405,7 +408,10 @@ def main():
     parser.add_argument(
         "-w",
         type=float,
-        help="W-coordinate of the 3-space where the cross section is taken. If not given,",
+        help=(
+            "W-coordinate of the 3-space where the cross section is taken. If not given, render "
+            "an animation."
+        ),
     )
     parser.add_argument(
         "-n",
@@ -414,9 +420,10 @@ def main():
         help="Number of frames.",
     )
     parser.add_argument(
-        "--svg",
-        action="store_true",
-        help="If provided, write SVG files instead of OBJ files.",
+        "-f",
+        "--format",
+        type=str,
+        help="obj (default), svg, svg_debug.",
     )
     parser.add_argument(
         "out_dir",
@@ -437,30 +444,33 @@ def main():
     out_dir = pathlib.Path(args.out_dir)
     out_dir.mkdir(exist_ok=True, parents=True)
 
-    def do_action(w, out_file_stem, normalize=False):
+    def render_one_frame(w, out_file_stem, normalize=False):
         workplane = make_polytwister_cross_section(polytwister, w)
-        if args.svg:
+        if args.format == "svg":
             out_file_name = out_dir / (out_file_stem + ".svg")
             svg_document = export_svg(workplane, normalize=True)
-            with open(out_dir / out_file_name, "w") as f:
+            with open(out_file_name, "w") as f:
                 f.write(svg_document)
+        elif args.format == "svg_debug":
+            out_file_name = out_dir / (out_file_stem + ".svg")
+            workplane.exportSvg(str(out_file_name))
         else:
             out_file_name = out_dir / (out_file_stem + ".obj")
             mesh = discretize_workplane(workplane)
             if normalize:
                 mesh = normalize_mesh(mesh)
-            with open(out_dir / out_file_name, "w") as f:
+            with open(out_file_name, "w") as f:
                 write_mesh_as_obj(mesh, f)
 
     if args.w is not None:
-        do_action(args.w, "out", normalize=True)
+        render_one_frame(args.w, "out", normalize=True)
     else:
         scale, max_w = get_scale_and_max_w(polytwister)
         num_frames = args.n
         num_digits = int(math.ceil(math.log10(num_frames)))
         for i in range(num_frames):
             logging.debug(f"Rendering frame {i}.")
-            do_action(
+            render_one_frame(
                 -max_w + max_w * 2 * i / (num_frames - 1),
                 f"out_{str(i).rjust(num_digits, '0')}",
             )
