@@ -298,6 +298,11 @@ def main():
         help="Name of polytwister.",
     )
     parser.add_argument(
+        "-cs",
+        "--config-string",
+        help="Config JSON string.",
+    )
+    parser.add_argument(
         "-r",
         "--remesh",
         action="store_true",
@@ -319,22 +324,27 @@ def main():
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
 
-    with open("config.json") as f:
-        config = json.load(f)
-    set_up_for_render({})
-    material_config = config["polytwisters"][6]["material"]
+    config = {}
+    if args.config is not None:
+        config = json.loads(args.config)
+    render_config = config.get("render", {})
+    set_up_for_render(render_config)
+    material_config = config.get("material", {})
     material = None
 
+    # Find all .obj files and sort in alphanumerical order.
     directory = pathlib.Path(args.dir)
     obj_paths = [path for path in directory.glob("*.obj")]
     obj_paths.sort()
 
     num_frames = len(obj_paths)
+    # One empty frame is added to the beginning and end of the animation.
     bpy.context.scene.frame_end = num_frames + 2
 
     sections = []
 
     for i, path in enumerate(obj_paths):
+        # +1 to convert 0-indexing to 1-indexing, another +1 for the initial empty frame.
         frame_number = i + 2
 
         deselect_all()
@@ -364,6 +374,12 @@ def main():
 
         do_scale(DEFAULT_SCALE)
 
+        # To animate the sections, drivers are added so that the object appears only for its
+        # assigned frame, both in the viewport and in the render.
+        #
+        # I decided not to use keyframes because the hide_viewport property can't be animated, which
+        # is annoying. Drivers are fairly similar to keyframes in Blender and I haven't noticed any
+        # performance issues in the viewport.
         driver = bpy.context.object.driver_add("hide_viewport").driver
         driver.type = "SCRIPTED"
         driver.expression = f"frame != {frame_number}"
