@@ -57,6 +57,7 @@ def group_under_empty(parts):
     parent = bpy.context.object
     for part in parts:
         part.select_set(True)
+    parent.select_set(True)
     bpy.ops.object.parent_set(type="OBJECT")
     deselect_all()
     bpy.context.view_layer.objects.active = parent
@@ -116,12 +117,6 @@ def realize_soft_polytwister(
     bpy.context.view_layer.objects.active = object_
 
     do_scale(DEFAULT_SCALE)
-
-    bpy.ops.object.modifier_add(type="REMESH")
-    modifier = bpy.context.object.modifiers[-1]
-    modifier.mode = "SHARP"
-    modifier.octree_depth = 8
-    modifier.use_smooth_shade = True
 
     make_material_from_config(material_config)
 
@@ -302,6 +297,12 @@ def main():
         "--polytwister",
         help="Name of polytwister.",
     )
+    parser.add_argument(
+        "-r",
+        "--remesh",
+        action="store_true",
+        help="Add a remesh modifier. Usually needed for soft polytwisters.",
+    )
 
     argv = sys.argv
     for i, argument in enumerate(argv):
@@ -311,6 +312,8 @@ def main():
     else:
         argv = []
     args = parser.parse_args(argv)
+
+    remesh = args.remesh
 
     # Delete the default objects.
     bpy.ops.object.select_all(action="SELECT")
@@ -323,15 +326,16 @@ def main():
     material = None
 
     directory = pathlib.Path(args.dir)
-
     obj_paths = [path for path in directory.glob("*.obj")]
     obj_paths.sort()
 
     num_frames = len(obj_paths)
-    bpy.context.scene.frame_end = num_frames
+    bpy.context.scene.frame_end = num_frames + 2
+
+    sections = []
 
     for i, path in enumerate(obj_paths):
-        frame_number = i + 1
+        frame_number = i + 2
 
         deselect_all()
         bpy.ops.import_scene.obj(filepath=str(path))
@@ -343,12 +347,20 @@ def main():
         else:
             raise RuntimeError("Selected mesh not found, may be a bug")
         bpy.context.view_layer.objects.active = object_
+        sections.append(object_)
 
         shade_auto_smooth()
 
         if material is None:
             material = make_material_from_config(material_config)
         bpy.context.object.active_material = material
+
+        if remesh:
+            bpy.ops.object.modifier_add(type="REMESH")
+            modifier = bpy.context.object.modifiers[-1]
+            modifier.mode = "SHARP"
+            modifier.octree_depth = 8
+            modifier.use_smooth_shade = True
 
         do_scale(DEFAULT_SCALE)
 
