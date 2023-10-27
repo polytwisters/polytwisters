@@ -118,9 +118,13 @@ def render_as_polylines(workplane: cadquery.Workplane) -> Polylines:
     return paths
 
 
-def export_svg(workplane, normalize=False, additional_scale=1.0):
-    canvas_size = 500.0
-    border_size = 20.0
+def export_svg(workplane, normalize=False, additional_scale=1.0) -> str:
+    """Given a workplane, orthogonally project its curves to 2D with hidden backfaces (that is,
+    create a 2D vector outline rendering of an opaque object, like a wireframe) and return the code
+    for an SVG document.
+    """
+    canvas_size = 1500.0
+    border_size = 100.0
     figure_size = canvas_size - 2 * border_size
 
     polylines = render_as_polylines(workplane)
@@ -143,8 +147,8 @@ def export_svg(workplane, normalize=False, additional_scale=1.0):
 
 
 def export_montage_as_svg(polylines_list: list[Polylines], additional_scale=1.0):
-    cell_size = 100.0
-    gap = 20.0
+    cell_size = 500.0
+    gap = 50.0
 
     num_cells = len(polylines_list)
     num_rows = int(math.sqrt(num_cells))

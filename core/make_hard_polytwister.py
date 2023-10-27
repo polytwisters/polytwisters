@@ -308,8 +308,6 @@ def normalize_mesh(mesh):
 
 
 def main():
-    logging.basicConfig(level=logging.DEBUG)
-
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "polytwister",
@@ -320,25 +318,25 @@ def main():
         type=float,
         help=(
             "W-coordinate of the 3-space where the cross section is taken. If not given, render "
-            "an animation."
+            "an animation. Not allowed for the format 'svg_montage'."
         ),
     )
     parser.add_argument(
         "-n",
         type=int,
-        default=100,
+        default=16,
         help="Number of frames.",
     )
     parser.add_argument(
         "-f",
         "--format",
         type=str,
-        help="obj (default), svg.",
+        help="obj (default), svg, or svg_montage.",
     )
     parser.add_argument(
-        "out_dir",
+        "out",
         type=str,
-        help="Output directory of file(s)."
+        help="Output file name if a single file, output directory if an animation."
     )
     args = parser.parse_args()
 
@@ -351,33 +349,36 @@ def main():
     else:
         raise ValueError(f'Polytwister "{polytwister_name}" not found.')
 
-    out_dir = pathlib.Path(args.out_dir)
-    out_dir.mkdir(exist_ok=True, parents=True)
+    out_path = pathlib.Path(args.out)
 
-    polylines_list = []
+    # The following code entangles the different formats too much, it would likely be better to
+    # refactor into different functions for different formats even if a bit of code duplication
+    # happens.
 
-    def render_one_frame(w, out_file_stem, normalize=False, scale=1.0):
+    def render_one_frame(polytwister, w, out_file, normalize=False, scale=1.0):
         workplane = make_polytwister_cross_section(polytwister, w)
         if args.format == "svg_montage":
             polylines_list.append(render_as_polylines(workplane))
         elif args.format == "svg":
-            out_file_name = out_dir / (out_file_stem + ".svg")
             svg_document = export_svg(workplane, normalize=normalize, additional_scale=scale)
-            with open(out_file_name, "w") as f:
+            with open(out_file, "x") as f:
                 f.write(svg_document)
         else:
-            out_file_name = out_dir / (out_file_stem + ".obj")
             mesh = discretize_workplane(workplane)
             if normalize:
                 mesh = normalize_mesh(mesh)
             if scale != 1.0:
                 mesh = scale_mesh(mesh, scale)
-            with open(out_file_name, "w") as f:
+            with open(out_file, "x") as f:
                 write_mesh_as_obj(mesh, f)
 
     if args.w is not None:
-        render_one_frame(args.w, "out", normalize=True)
+        if args.format == "svg_montage":
+            raise ValueError(f'The -w parameter is incompatible with the {args.format} output format.')
+        render_one_frame(polytwister, args.w, "out", normalize=True)
     else:
+        polylines_list = []
+        out_path.mkdir(exist_ok=True, parents=True)
         scale, max_w = get_scale_and_max_w(polytwister)
         num_frames = args.n
         num_digits = int(math.ceil(math.log10(num_frames)))
@@ -388,12 +389,15 @@ def main():
             # frames being empty, so we leave those out.
             w = -max_w + max_w * 2 * (i + 1) / (num_frames + 1)
             file_stem = f"out_{str(i).rjust(num_digits, '0')}"
-            render_one_frame(w, file_stem, scale=scale)
+            extension = ".svg" if args.format == "svg" else ".obj"
+            out_file = out_path / (file_stem + extension)
+            render_one_frame(polytwister, w, out_file, scale=scale)
 
         if args.format == "svg_montage":
-            with open(out_dir / "montage.svg", "w") as f:
+            with open(out_path, "x") as f:
                 f.write(export_montage_as_svg(polylines_list, scale))
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     main()
