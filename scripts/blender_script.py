@@ -68,7 +68,6 @@ def make_material_from_config(config):
     """Create a material on the active object and configure a Principled BSDF."""
     bpy.ops.material.new()
     material = bpy.data.materials[-1]
-    bpy.context.object.active_material = material
 
     if config is None:
         return material
@@ -298,6 +297,11 @@ def main():
         "dir",
         help="Input dir of Wavefront OBJ files.",
     )
+    parser.add_argument(
+        "-p",
+        "--polytwister",
+        help="Name of polytwister.",
+    )
 
     argv = sys.argv
     for i, argument in enumerate(argv):
@@ -312,10 +316,19 @@ def main():
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
 
+    with open("config.json") as f:
+        config = json.load(f)
+    set_up_for_render({})
+    material_config = config["polytwisters"][6]["material"]
+    material = None
+
     directory = pathlib.Path(args.dir)
 
     obj_paths = [path for path in directory.glob("*.obj")]
     obj_paths.sort()
+
+    num_frames = len(obj_paths)
+    bpy.context.scene.frame_end = num_frames
 
     for i, path in enumerate(obj_paths):
         frame_number = i + 1
@@ -331,7 +344,19 @@ def main():
             raise RuntimeError("Selected mesh not found, may be a bug")
         bpy.context.view_layer.objects.active = object_
 
+        shade_auto_smooth()
+
+        if material is None:
+            material = make_material_from_config(material_config)
+        bpy.context.object.active_material = material
+
+        do_scale(DEFAULT_SCALE)
+
         driver = bpy.context.object.driver_add("hide_viewport").driver
+        driver.type = "SCRIPTED"
+        driver.expression = f"frame != {frame_number}"
+
+        driver = bpy.context.object.driver_add("hide_render").driver
         driver.type = "SCRIPTED"
         driver.expression = f"frame != {frame_number}"
 
