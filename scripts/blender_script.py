@@ -1,7 +1,10 @@
+"""This script is meant to be run in Blender, not the standard Python interpreter.
+"""
 import argparse
 import json
 import math
 import os
+import pathlib
 import subprocess
 import sys
 import traceback
@@ -9,12 +12,6 @@ import warnings
 
 import bpy
 import mathutils
-
-directory = os.path.dirname(bpy.data.filepath)
-if directory not in sys.path:
-    sys.path.append(directory)
-
-import common
 
 EXPECTED_BLENDER_VERSION = (3, 3)
 
@@ -90,14 +87,6 @@ def shade_auto_smooth():
     bpy.context.object.data.use_auto_smooth = True
     bpy.context.object.data.auto_smooth_angle = math.radians(30.0)
 
-
-def realize_hard_polytwister(
-    polytwister,
-    w,
-    material_config=None,
-    scale=1.0,
-):
-    pass
 
 def realize_soft_polytwister(
     polytwister,
@@ -306,32 +295,8 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "obj_file",
-        help="Input Wavefront OBJ file.",
-    )
-    parser.add_argument(
-        "-n",
-        "--normalize",
-        action="store_true",
-        help="If specified, normalize the size of the object so it fits nicely in camera.",
-    )
-    parser.add_argument(
-        "-s",
-        "--scale",
-        type=float,
-        default=1,
-        help=(
-            "Uniform scaling applied to object. "
-            "If --normalize is provided, scaling is done after normalization."
-        ),
-    )
-    parser.add_argument(
-        "-c",
-        "--config",
-        type=str,
-        help=(
-            "JSON string for render configuration."
-        ),
+        "dir",
+        help="Input dir of Wavefront OBJ files.",
     )
 
     argv = sys.argv
@@ -343,33 +308,32 @@ def main():
         argv = []
     args = parser.parse_args(argv)
 
-    polytwister_name = args.polytwister
-    polytwister_name = polytwister_name.replace("_", " ")
-
-    if args.config is not None:
-        config = json.loads(args.config)
-    elif args.config_file is not None:
-        with open(args.config_file) as file:
-            config = json.load(file)
-    else:
-        with open("config.json") as file:
-            config = json.load(file)
-
-    polytwister_config = config.get("defaults", {})
-    for candidate in config["polytwisters"]:
-        # hack, sorry
-        if candidate["name"].replace("_", " ") == polytwister_name:
-            polytwister_config.update(candidate)
-
-    kwargs = {
-        "w": args.w,
-        "scale": args.scale,
-        "material_config": polytwister_config.get("material", None),
-    }
-
     # Delete the default objects.
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
+
+    directory = pathlib.Path(args.dir)
+
+    obj_paths = [path for path in directory.glob("*.obj")]
+    obj_paths.sort()
+
+    for i, path in enumerate(obj_paths):
+        frame_number = i + 1
+
+        deselect_all()
+        bpy.ops.import_scene.obj(filepath=str(path))
+
+        # The imported mesh is not automatically made active, but it is selected. Yuck.
+        for object_ in bpy.context.scene.objects:
+            if object_.select_get():
+                break
+        else:
+            raise RuntimeError("Selected mesh not found, may be a bug")
+        bpy.context.view_layer.objects.active = object_
+
+        driver = bpy.context.object.driver_add("hide_viewport").driver
+        driver.type = "SCRIPTED"
+        driver.expression = f"frame != {frame_number}"
 
 
 if __name__ == "__main__":
