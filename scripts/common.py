@@ -21,9 +21,6 @@ else:
     PYTHON = ["python3"]
 
 BLENDER_SCRIPT = SCRIPT_ROOT / "blender_script.py"
-RENDER_ANIMATION_SCRIPT = SCRIPT_ROOT / "render_animation.py"
-MAKE_VIDEO_SCRIPT = SCRIPT_ROOT / "make_video.py"
-NOTIFY_SCRIPT = SCRIPT_ROOT / "notify.py"
 
 
 def blender_command(script_path, blender_args, script_args, interactive=False):

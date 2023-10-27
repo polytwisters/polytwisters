@@ -6,57 +6,50 @@ This repository is a project to clean up and port the original POV-Ray code (unp
 
 **This software is in an early stage of development.** You will probably have to make some minor changes to get it working on your machine.
 
-## Overview
+## Project structure
 
-This software has many components due to some feature creep. However, those components are fairly cleanly separated. Here they are from most essential to least essential:
+This software has many components due to some feature creep, and has gotten fairly messy. However, those components are fairly cleanly separated.
 
-* `hard_polytwisters.py` and `soft_polytwisters.py`, which contain declarative definitions of polytwisters based on the locations of their rings or cycloplanes. These scripts are nearly dependency-free, although `soft_polytwisters.py` requires NumPy.
-* `make_soft_polytwister.py` takes definitions from `soft_polytwisters.py` and renders their cross sections as meshes. It requires SciPy for 4D and 3D convex hull computation.
-* `make_polytwister.py` uses all of the above to create a Blender project file for a given cross section. It can open up Blender interactively, can render an image, or export an STL mesh. It must be run in Blender (which can be done using Blender's command-line options).
-** It runs `make_soft_polytwister` as a subprocess using the system Python, because getting the SciPy dependency into the Blender Python environment is a massive pain.
-* `render_animation.py` repeatedly calls `make_polytwister.py` to render a full animation as a sequence of PNG files. It is to be run with the system Python.
-** Why call Blender for each frame rather than using Blender's built-in animation feature? The main reason is for rendering frames out of order so the time resolution progressively increases. But I may change this in the future.
-* `make_video.py` takes the output of `render_animation`, adds a background to each frame, and renders an MP4 video file.
-* `gui.py` wraps up all the high-level features in a very crude GUI. It requires PySimpleGUI and a working Tkinter installation.
-* `notify.py` allows you to use Twilio to send SMS to your phone. It's completely optional.
+* `core`: All geometric specifications of polytwisters, and code to compute them as meshes.
+  * `hard_polytwisters.py` and `soft_polytwisters.py` contain declarative definitions of polytwisters based on the locations of their rings or cycloplanes. These scripts are nearly dependency-free, although `soft_polytwisters.py` requires NumPy.
+  * `make_soft_polytwister.py` takes definitions from `soft_polytwisters.py` and renders a cross section as a Wavefront OBJ file. It requires SciPy for 4D and 3D convex hull computation (which internally uses QHull).
+  * `make_hard_polytwister.py` takes a definition from `hard_polytwisters.py` and allows rendering a single Wavefront OBJ cross section, a directory of .obj cross sections, a single .svg file, or a montage of .svg files. It requires CadQuery. Unfortunately CadQuery does not run on Python 3.11 as of this writing due a dependency on nlopt, so you will nee to use Python 3.8-3.10.
+* `scripts`: Somewhat disorganized scripts for processing the output of the above scripts and computing animations.
+  * `blender_script.py` is a Blender Python script that takes a directory of .obj cross sections and rolls them into an animation with proper studio lighting and materials. It must be run with the Blender Python interpreter, not a standard Python interpreter.
+  * `blender_wrapper.py` is a small wrapper that runs `blender_script.py` with the Blender Python interpreter.
+  * `make_gif.py` converts a video to a GIF with ffmpeg, as animated GIF functionality is not provided by Blender.
 
-## Basic usage with GUI
+## Basic usage
 
 I've managed to run this on macOS, Linux, and Windows. Requirements:
 
 * Blender 3.3
-* The following Python deps: `pip install numpy scipy PySimpleGUI twilio`. Last two are optional.
-* A working version of Tkinter if you want to run a simple GUI. See here: https://stackoverflow.com/a/76105219.
-* ffmpeg and ImageMagick if video export is desired.
+* Python 3.8-3.10 with these deps: `pip install numpy scipy cadquery`. Python 3.11 does NOT work as of this writing.
+* ffmpeg for GIF conversion.
 
-To run GUI:
+Generate 100 OBJ files for the cross sections of the tetratwister to the `tetratwister_obj` directory:
 
 ```
-python3 gui.py  # macOS
-py -3 gui.py  # Windows
+python core/make_hard_polytwister.py tetratwister -n 100 -f obj tetratwister_obj/
 ```
 
-## Advanced usage
+Load these files interactively as a Blender animation:
 
-To view a single cross section in the Blender GUI:
+```
+python scripts/blender_wrapper.py tetratwister_obj
+```
 
-    blender --python make_polytwister.py -- bloated_icosatwister 0.13 --normalize
+Initially the animation is at frame 1, which is empty. Drag around the animation frame to view different cross sections.
 
-where `blender` is substituted with the path of the Blender executable, `bloated_icosatwister` is the name of a polytwister, and `0.13` is the W-coordinate of 3-space where the cross section is taken. `--normalize` is optional and ensures that the cross section is scaled to fit in the camera's view. The above command sets up a camera and lights and is ready for rendering a still image.
+## Other goodies
 
-To render an animation, run the following and wait a few hours:
+To generate a SVG vector lineart montage: 
 
-    python3 render_animation.py bloated_icosatwister
+```
+python core/make_hard_polytwister.py tetratwister -f svg_montage tetratwister_svg
+```
 
-To compile the frames into a video at `out.mp4`:
-
-    python3 make_video.py out/bloated_icosatwister
-
-If you are impatient, you may run `make_video.py` during the execution of `render_animation.py` to see all frames so far. `render_animation.py` renders frames out of order so that the time resolution of the animation gradually increases.
-
-To export all polytwisters as STL meshes, run:
-
-    python3 export_meshes.py
+See `python core/make_hard_polytwister.py --help` for full options.
 
 ## Cycloplane research code
 

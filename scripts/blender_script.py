@@ -308,6 +308,11 @@ def main():
         action="store_true",
         help="Add a remesh modifier. Usually needed for soft polytwisters.",
     )
+    parser.add_argument(
+        "-o",
+        "--output",
+        help="If provided, saves a .blend file to the given location.",
+    )
 
     argv = sys.argv
     for i, argument in enumerate(argv):
@@ -325,8 +330,8 @@ def main():
     bpy.ops.object.delete(use_global=False)
 
     config = {}
-    if args.config is not None:
-        config = json.loads(args.config)
+    if args.config_string is not None:
+        config = json.loads(args.config_string)
     render_config = config.get("render", {})
     set_up_for_render(render_config)
     material_config = config.get("material", {})
@@ -387,6 +392,11 @@ def main():
         driver = bpy.context.object.driver_add("hide_render").driver
         driver.type = "SCRIPTED"
         driver.expression = f"frame != {frame_number}"
+
+    if args.output:
+        # save_as_mainfile doesn't like relative paths, convert to absolute.
+        path = pathlib.Path(args.output).resolve()
+        bpy.ops.wm.save_as_mainfile(filepath=str(path))
 
 
 if __name__ == "__main__":
