@@ -1,8 +1,10 @@
 import collections
 import argparse
 import itertools
+import math
 
 import numpy as np
+import pathlib
 import scipy.spatial
 import scipy.spatial.transform
 
@@ -162,6 +164,28 @@ def write_hull_as_obj(hull_3d, f):
         f.write(f"f {triangle[0] + 1} {triangle[1] + 1} {triangle[2] + 1}\n")
 
 
+def render_one_section_as_obj(polytwister, w, resolution, out_file):
+    cross_section = get_soft_polytwister_cross_section(polytwister, w, resolution)
+    with open(out_file, "x") as f:
+        if cross_section is not None:
+            write_hull_as_obj(cross_section, f)
+
+
+def get_w_coordinates_and_file_names(num_frames):
+    num_digits = int(math.ceil(math.log10(num_frames)))
+    for i in range(num_frames):
+        w = -1 + 2 * (i + 1) / (num_frames + 1)
+        file_stem = f"out_{str(i).rjust(num_digits, '0')}"
+        yield w, file_stem
+
+
+def render_all_sections_as_objs(polytwister, num_frames, resolution, out_dir):
+    out_dir.mkdir()
+    for w, file_stem in get_w_coordinates_and_file_names(num_frames):
+        out_file = out_dir / (file_stem + ".obj")
+        render_one_section_as_obj(polytwister, w, resolution, out_file)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -169,48 +193,69 @@ def main():
         help="Name of the polytwister. For convenience, underscores are replaced with spaces.",
     )
     parser.add_argument(
-        "w",
+        "-w",
         type=float,
-        help="W-coordinate of the 3-space where the cross section is taken.",
+        help=(
+            "W-coordinate of the 3-space where the cross section is taken. "
+            "If not given, render an animation."
+        ),
     )
     parser.add_argument(
-        "obj_out",
+        "-n",
+        type=int,
+        help="Number of frames."
+    )
+    parser.add_argument(
+        "out",
         type=str,
-        help="If specified, write out a Wavefront OBJ file."
+        help="Output file name if a single file, output directory if an animation."
+    )
+    parser.add_argument(
+        "-f",
+        "--format",
+        type=str,
+        default="obj",
+        help='Output format. Only "obj" (Wavefront OBJ) is supported currently.',
     )
     parser.add_argument(
         "-r",
         "--resolution",
         type=int,
         default=100,
-        help="Number of segments used for cylinders.",
+        help="Number of segments used for rings.",
     )
-    parser.add_argument(
-        "-s",
-        "--scale",
-        type=float,
-        default=1,
-        help=(
-            "Uniform scaling applied to object. "
-            "If --normalize is provided, scaling is done after normalization."
-        ),
-    )
-    args = parser.parse_args()
 
+    args = parser.parse_args()
+    w = args.w
+    num_frames = args.num_frames
+    out_path = pathlib.Path(args.out)
     polytwister_name = args.polytwister
     polytwister_name = polytwister_name.replace("_", " ")
     resolution = args.resolution
 
-    for polytwister in soft_polytwisters.ALL_SOFT_POLYTWISTERS:
+    for polytwister in soft_polytwisters.get_all_soft_polytwisters():
         if polytwister_name in polytwister["names"]:
             break
     else:
         raise ValueError(f'Polytwister "{polytwister_name}" not found.')
 
-    cross_section = get_soft_polytwister_cross_section(polytwister, args.w, resolution)
-    with open(args.obj_out, "w") as f:
-        if cross_section is not None:
-            write_hull_as_obj(cross_section, f)
+    if w is None and num_frames is None:
+        raise ValueError(
+            "You must specify one of -w (for a single cross section) or "
+            "-n (for multiple cross sections)."
+        )
+
+    if w is not None and num_frames is not None:
+        raise ValueError(f"You cannot specify both -w and -n.")
+
+    if args.format == "obj":
+        if w is not None:
+            render_one_section_as_obj(polytwister, w, resolution, out_path)
+        elif num_frames is not None:
+            render_all_sections_as_objs(polytwister, num_frames, resolution, out_path)
+
+    else:
+        raise ValueError('Unsupported format: {args.format}')
 
 
 if __name__ == "__main__":

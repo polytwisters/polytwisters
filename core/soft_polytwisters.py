@@ -159,18 +159,22 @@ def get_soft_dyadic_twister(n, special_names=None):
     }
 
 
-ALL_SOFT_POLYTWISTERS = [
-    get_soft_dyadic_twister(2, ["duospindle"]),
-    get_soft_dyadic_twister(3),
-    get_soft_dyadic_twister(4),
-    get_soft_dyadic_twister(5),
-    get_soft_dyadic_twister(6),
-    get_soft_dyadic_twister(7),
-    get_soft_tetratwister(),
-    get_soft_cubetwister(),
-    get_soft_octatwister(),
-    get_soft_dodecatwister(),
-    get_soft_icosatwister(),
-]
-for polytwister in ALL_SOFT_POLYTWISTERS:
-    polytwister["type"] = "soft"
+def get_all_soft_polytwisters():
+    polytwisters_list = [
+        get_soft_dyadic_twister(2, ["duospindle"]),
+        get_soft_dyadic_twister(3),
+        get_soft_dyadic_twister(4),
+        get_soft_dyadic_twister(5),
+        get_soft_dyadic_twister(6),
+        get_soft_dyadic_twister(7),
+        get_soft_tetratwister(),
+        get_soft_cubetwister(),
+        get_soft_octatwister(),
+        get_soft_dodecatwister(),
+        get_soft_icosatwister(),
+    ]
+    result = {}
+    for polytwister in polytwisters_list:
+        polytwister["type"] = "soft"
+        result[polytwister["names"][0]] = polytwister
+    return result

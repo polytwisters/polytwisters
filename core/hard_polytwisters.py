@@ -594,32 +594,36 @@ def get_great_icosatwister():
     return polytwister
 
 
-ALL_HARD_POLYTWISTERS = [
-    get_dyadic_twister(3),
-    get_dyadic_twister(4),
-    get_dyadic_twister(5),
-    get_dyadic_twister(6),
-    get_dyadic_twister(7),
-    get_tetratwister(),
-    get_quasitetratwister(),
-    get_bloated_tetratwister(),
-    get_cubetwister(),
-    get_quasicubetwister(),
-    get_bloated_cubetwister(),
-    get_octatwister(),
-    get_quasioctatwister(),
-    get_bloated_octatwister(),
-    get_dodecatwister(),
-    get_quasidodecatwister(),
-    get_bloated_dodecatwister(),
-    get_icosatwister(),
-    get_quasicosatwister(),
-    get_bloated_icosatwister(),
-    get_great_dodecatwister(),
-    get_great_quasidodecatwister(),
-    get_great_bloated_dodecatwister(),
-    get_small_stellated_dodecatwister(),
-    get_small_quasistellated_dodecatwister(),
-]
-for polytwister in ALL_HARD_POLYTWISTERS:
-    polytwister["type"] = "hard"
+def get_all_hard_polytwisters():
+    polytwisters_list = [
+        get_dyadic_twister(3),
+        get_dyadic_twister(4),
+        get_dyadic_twister(5),
+        get_dyadic_twister(6),
+        get_dyadic_twister(7),
+        get_tetratwister(),
+        get_quasitetratwister(),
+        get_bloated_tetratwister(),
+        get_cubetwister(),
+        get_quasicubetwister(),
+        get_bloated_cubetwister(),
+        get_octatwister(),
+        get_quasioctatwister(),
+        get_bloated_octatwister(),
+        get_dodecatwister(),
+        get_quasidodecatwister(),
+        get_bloated_dodecatwister(),
+        get_icosatwister(),
+        get_quasicosatwister(),
+        get_bloated_icosatwister(),
+        get_great_dodecatwister(),
+        get_great_quasidodecatwister(),
+        get_great_bloated_dodecatwister(),
+        get_small_stellated_dodecatwister(),
+        get_small_quasistellated_dodecatwister(),
+    ]
+    result = {}
+    for polytwister in polytwisters_list:
+        polytwister["type"] = "soft"
+        result[polytwister["names"][0]] = polytwister
+    return result

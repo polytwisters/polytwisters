@@ -346,6 +346,7 @@ def render_svg_montage(polytwister, num_frames):
 
 
 def render_all_sections_as_svgs(polytwister, num_frames, out_dir):
+    out_dir.mkdir()
     scale, max_w = get_scale_and_max_w(polytwister)
     for w, file_stem in get_w_coordinates_and_file_names(polytwister, num_frames, max_w):
         out_file = out_dir / (file_stem + ".svg")
@@ -353,6 +354,7 @@ def render_all_sections_as_svgs(polytwister, num_frames, out_dir):
 
 
 def render_all_sections_as_objs(polytwister, num_frames, out_dir):
+    out_dir.mkdir()
     scale, max_w = get_scale_and_max_w(polytwister)
     for w, file_stem in get_w_coordinates_and_file_names(polytwister, num_frames, max_w):
         out_file = out_dir / (file_stem + ".obj")
@@ -383,6 +385,7 @@ def main():
         "-f",
         "--format",
         type=str,
+        default="obj",
         help="obj (default), svg, or svg_montage.",
     )
     parser.add_argument(
@@ -398,7 +401,7 @@ def main():
     polytwister_name = args.polytwister
     polytwister_name = polytwister_name.replace("_", " ")
 
-    for polytwister in hard_polytwisters.ALL_HARD_POLYTWISTERS:
+    for polytwister in hard_polytwisters.get_all_hard_polytwisters():
         if polytwister_name in polytwister["names"]:
             break
     else:
@@ -429,6 +432,9 @@ def main():
             render_one_section_as_obj(polytwister, w, out_path, normalize=True)
         elif num_frames is not None:
             render_all_sections_as_svgs(polytwister, num_frames, out_path)
+
+    else:
+        raise ValueError('Unsupported format: {args.format}')
 
 
 if __name__ == "__main__":
