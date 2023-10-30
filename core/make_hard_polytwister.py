@@ -307,6 +307,59 @@ def normalize_mesh(mesh):
     return vertices, triangles
 
 
+def get_w_coordinates_and_file_names(polytwister, num_frames, max_w):
+    num_digits = int(math.ceil(math.log10(num_frames)))
+    for i in range(num_frames):
+        # Originally this was -max_w + max_w * 2 * i / (num_frames - 1) so the first frame has
+        # w = -max_w and the final frame has w = max_w, but that results in the first and final
+        # frames being empty, so we leave those out.
+        w = -max_w + max_w * 2 * (i + 1) / (num_frames + 1)
+        file_stem = f"out_{str(i).rjust(num_digits, '0')}"
+        yield w, file_stem
+
+
+def render_one_section_as_obj(polytwister, w, out_file, normalize=False, scale=1.0):
+    workplane = make_polytwister_cross_section(polytwister, w)
+    mesh = discretize_workplane(workplane)
+    if normalize:
+        mesh = normalize_mesh(mesh)
+    if scale != 1.0:
+        mesh = scale_mesh(mesh, scale)
+    with open(out_file, "x") as f:
+        write_mesh_as_obj(mesh, f)
+
+
+def render_one_section_as_svg(polytwister, w, out_file, normalize=False, scale=1.0):
+    workplane = make_polytwister_cross_section(polytwister, w)
+    svg_document = export_svg(workplane, normalize=normalize, additional_scale=scale)
+    with open(out_file, "x") as f:
+        f.write(svg_document)
+
+
+def render_svg_montage(polytwister, num_frames):
+    polylines_list = []
+    scale, max_w = get_scale_and_max_w(polytwister)
+    for w, file_stem in get_w_coordinates_and_file_names(polytwister, num_frames, max_w):
+        workplane = make_polytwister_cross_section(polytwister, w)
+        polylines_list.append(render_as_polylines(workplane))
+    return export_montage_as_svg(polylines_list, scale)
+
+
+def render_all_sections_as_svgs(polytwister, num_frames, out_dir):
+    scale, max_w = get_scale_and_max_w(polytwister)
+    for w, file_stem in get_w_coordinates_and_file_names(polytwister, num_frames, max_w):
+        out_file = out_dir / (file_stem + ".svg")
+        render_one_section_as_svg(polytwister, w, out_file, scale=scale)
+
+
+def render_all_sections_as_objs(polytwister, num_frames, out_dir):
+    scale, max_w = get_scale_and_max_w(polytwister)
+    for w, file_stem in get_w_coordinates_and_file_names(polytwister, num_frames, max_w):
+        out_file = out_dir / (file_stem + ".obj")
+        render_one_section_as_obj(polytwister, w, out_file, scale=scale)
+
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -324,7 +377,6 @@ def main():
     parser.add_argument(
         "-n",
         type=int,
-        default=16,
         help="Number of frames.",
     )
     parser.add_argument(
@@ -338,8 +390,11 @@ def main():
         type=str,
         help="Output file name if a single file, output directory if an animation."
     )
-    args = parser.parse_args()
 
+    args = parser.parse_args()
+    w = args.w
+    num_frames = args.num_frames
+    out_path = pathlib.Path(args.out)
     polytwister_name = args.polytwister
     polytwister_name = polytwister_name.replace("_", " ")
 
@@ -349,53 +404,31 @@ def main():
     else:
         raise ValueError(f'Polytwister "{polytwister_name}" not found.')
 
-    out_path = pathlib.Path(args.out)
+    if w is None and num_frames is None:
+        raise ValueError(
+            "You must specify one of -w (for a single cross section) or "
+            "-n (for multiple cross sections)."
+        )
 
-    # The following code entangles the different formats too much, it would likely be better to
-    # refactor into different functions for different formats even if a bit of code duplication
-    # happens.
+    if w is not None and num_frames is not None:
+        raise ValueError(f"You cannot specify both -w and -n.")
 
-    def render_one_frame(polytwister, w, out_file, normalize=False, scale=1.0):
-        workplane = make_polytwister_cross_section(polytwister, w)
-        if args.format == "svg_montage":
-            polylines_list.append(render_as_polylines(workplane))
-        elif args.format == "svg":
-            svg_document = export_svg(workplane, normalize=normalize, additional_scale=scale)
-            with open(out_file, "x") as f:
-                f.write(svg_document)
-        else:
-            mesh = discretize_workplane(workplane)
-            if normalize:
-                mesh = normalize_mesh(mesh)
-            if scale != 1.0:
-                mesh = scale_mesh(mesh, scale)
-            with open(out_file, "x") as f:
-                write_mesh_as_obj(mesh, f)
+    if args.format == "svg_montage":
+        document = render_svg_montage(polytwister, num_frames)
+        with open(out_path, "x") as f:
+            f.write(document)
 
-    if args.w is not None:
-        if args.format == "svg_montage":
-            raise ValueError(f'The -w parameter is incompatible with the {args.format} output format.')
-        render_one_frame(polytwister, args.w, "out", normalize=True)
-    else:
-        polylines_list = []
-        out_path.mkdir(exist_ok=True, parents=True)
-        scale, max_w = get_scale_and_max_w(polytwister)
-        num_frames = args.n
-        num_digits = int(math.ceil(math.log10(num_frames)))
-        for i in range(num_frames):
-            logging.debug(f"Rendering frame {i}.")
-            # Originally this was -max_w + max_w * 2 * i / (num_frames - 1) so the first frame has
-            # w = -max_w and the final frame has w = max_w, but that results in the first and final
-            # frames being empty, so we leave those out.
-            w = -max_w + max_w * 2 * (i + 1) / (num_frames + 1)
-            file_stem = f"out_{str(i).rjust(num_digits, '0')}"
-            extension = ".svg" if args.format == "svg" else ".obj"
-            out_file = out_path / (file_stem + extension)
-            render_one_frame(polytwister, w, out_file, scale=scale)
+    elif args.format == "svg":
+        if w is not None:
+            render_one_section_as_svg(polytwister, w, out_path, normalize=True)
+        elif num_frames is not None:
+            render_all_sections_as_svgs(polytwister, num_frames, out_path)
 
-        if args.format == "svg_montage":
-            with open(out_path, "x") as f:
-                f.write(export_montage_as_svg(polylines_list, scale))
+    elif args.format == "obj":
+        if w is not None:
+            render_one_section_as_obj(polytwister, w, out_path, normalize=True)
+        elif num_frames is not None:
+            render_all_sections_as_svgs(polytwister, num_frames, out_path)
 
 
 if __name__ == "__main__":
