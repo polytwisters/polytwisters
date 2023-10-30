@@ -20,7 +20,7 @@ LARGE = 10e3
 DEFAULT_CYLINDER_RESOLUTION = 64
 
 # Radius of polytwister's minimum containing sphere.
-# 20cm feels like a good size.
+# 20cm seems like a reasonable diameter for a physical polytwister sculpture.
 DEFAULT_SCALE = 20e-2 / 2
 
 
@@ -88,39 +88,6 @@ def shade_auto_smooth():
     bpy.context.object.data.auto_smooth_angle = math.radians(30.0)
 
 
-def realize_soft_polytwister(
-    polytwister,
-    w,
-    resolution=DEFAULT_CYLINDER_RESOLUTION,
-    material_config=None,
-    scale=1.0,
-):
-    obj_path = "tmp.obj"
-    subprocess.run(common.PYTHON + [
-        "make_soft_polytwister.py",
-        polytwister["names"][0],
-        str(w),
-        obj_path,
-        "--resolution",
-        str(resolution),
-        "--scale",
-        str(scale),
-    ], check=True)
-    bpy.ops.import_scene.obj(filepath=obj_path)
-
-    # The imported mesh is not automatically made active, but it is selected.
-    for object_ in bpy.context.scene.objects:
-        if object_.select_get():
-            break
-    else:
-        raise RuntimeError("Selected mesh not found, may be a bug")
-    bpy.context.view_layer.objects.active = object_
-
-    do_scale(DEFAULT_SCALE)
-
-    make_material_from_config(material_config)
-
-
 def rotation_to_point_to_origin(point):
     """Given a location of an object pointing along the X-axis, return a set of
     Euler angles that will rotate that object so it points at the origin."""
@@ -145,47 +112,20 @@ def convert_spherical_to_cartesian(radius, latitude, longitude):
     )
 
 
-def set_up_for_render(config):
-    """This function does the following:
+def set_up_camera(camera_longitude):
+    """Add and return a camera object and set it to the primary camera of the scene. The input
+    longitude is given in radians. A longitude of 0 is located on the positive X-axis, pi/2 on the
+    positive Y-axis, etc.
 
-    - Add a camera object and set it to the primary camera of the scene.
-    - Add lighting.
-    - Add ambient occlusion.
-    - Set the background to transparent.
-    - Ensure the scene renders a square 1080x1080 image.
-    - Set the engine to Cycles and the device to the GPU.
-    - Reduce the sample count to 128 and the preview sample count to 16.
-    - Set Render Properties -> Color Management -> Look to "High Contrast."
+    The camera is positioned about 15 degrees above the XY-plane and pointed directly at the origin.
+    Its size in the viewport is also reduced.
 
-    When adjusting lighting and rendering, we are aiming for a decently
-    photographic look with good depth perception but without distracting
-    from the polytwister's shape. The lighting is a one-size-fits-all
-    solution; ideally we would adjust lighting for individual
-    polytwisters but that would take too much effort.
-
-    We are using big area lights for soft shadows. Hard shadows can give
-    the impression of features that aren't really there, and aren't
-    appropriate for presenting mathematical objects.
-
-    However, dark areas are not themselves bad -- insufficient contrast can
-    inhibit depth perception and lead to an unattractive, washed-out
-    appearance. I am told by my YouTube education that inadequate shadows
-    are a common beginner mistake.
-
-    Standard three-point lighting is used to light the object. Ambient
-    occlusion adds some darkness to the crevices of nonconvex polytwisters,
-    preventing overexposure in the area directly facing the key light.
-
-    The Look setting in Color Management controls the nonlinear mapping
-    from physical units to color values that look good on a monitor or
-    projector. See the Blender docs on color management.
+    The camera is set to 85mm focal length, which is longer than Blender's default. This reduces
+    the foreshortening while remaining realistic.
     """
-
     camera_distance = 1.0
 
-    # Just enough angle to see the tops of convex polytwister sections.
     camera_latitude = math.radians(15)
-    camera_longitude = math.radians(10)
     camera_location = convert_spherical_to_cartesian(
         camera_distance, camera_latitude, camera_longitude
     )
@@ -194,25 +134,38 @@ def set_up_for_render(config):
         rotation=rotation_to_point_to_origin(camera_location)
     )
     camera = bpy.context.object
-    # Close-up shot with low perspective distortion.
     camera.data.lens = 85
-    camera.data.display_size = 0.2
-    bpy.context.scene.camera = bpy.context.object
+    camera.data.display_size = 0.1
+    bpy.context.scene.camera = camera
 
+    return camera
+
+
+def set_up_environment(strength, image_path):
+    """Set the world environment to an image, usually an HDRI environment. Its strength can be
+    controlled. The environment does not appear in the result because of the transparent background.
+    """
     world_node_tree = bpy.context.scene.world.node_tree
     nodes = world_node_tree.nodes
     nodes.clear()
     background_node = nodes.new(type="ShaderNodeBackground")
-    background_node.inputs["Strength"].default_value = config.get("environment_strength", 0.5)
+    background_node.inputs["Strength"].default_value = strength
     environment_node = nodes.new(type="ShaderNodeTexEnvironment")
-    environment_node.image = bpy.data.images.load(
-        config.get("environment_image", "//assets/studio_environment_2k.exr")
-    )
+    environment_node.image = bpy.data.images.load(image_path)
     output_node = nodes.new(type="ShaderNodeOutputWorld")
     links = world_node_tree.links
     links.new(environment_node.outputs["Color"], background_node.inputs["Color"])
     links.new(background_node.outputs["Background"], output_node.inputs["Surface"])
 
+
+def set_up_lights(camera_longitude):
+    """Add big, soft area lights. Hard shadows can give the impression of features that aren't
+    really there, and aren't appropriate for presenting mathematical objects. However, we also must
+    be careful to ensure nice contrast. If it is too washed out, it looks unattractive and inhibits
+    depth perception.
+
+    A bright key light highlights the object and a fill light ensures the shadows are not too dark.
+    """
     # Latitude and longitude are given in degrees for readability.
     # Longitudes are relative to the camera: a longitude of 0 degrees
     # is directly behind the camera, 90 degrees is directly from the
@@ -220,10 +173,10 @@ def set_up_for_render(config):
     # absolute.
     light_specs = [
         # Key light illuminates most of the front of the object
-        {"latitude": 10, "longitude": -50, "power": 100, "radius": 3.0},
+        {"latitude": 10.0, "longitude": -80, "power": 300.0, "radius": 3.0},
         # Fill light gently illuminates the shadows left by the key light
         # Don't make this too strong, shadows are good
-        {"latitude": 0, "longitude": 50, "power": 25, "radius": 3.0},
+        {"latitude": 0.0, "longitude": 50.0, "power": 15.0, "radius": 3.0},
         # I used to have a back light here but it didn't work too well. The HDRI is sufficient for
         # preventing really dark areas.
     ]
@@ -245,19 +198,25 @@ def set_up_for_render(config):
         )
         bpy.context.object.data.energy = light_spec["power"] * power_multiplier
 
-    # Add some ambient occlusion.
+
+def set_transparent_background():
+    """Ensure the environment texture does not show up in the video."""
+    bpy.context.scene.render.film_transparent = True
+
+
+def set_ambient_occlusion():
+    """Enable "fast GI" (a type of ambient occlusion) that adds some darkness to the crevices of
+    nonconvex polytwisters."""
     bpy.context.scene.cycles.use_fast_gi = True
     bpy.context.scene.world.light_settings.distance = 0.2
 
-    # Set background to transparent.
-    bpy.context.scene.render.film_transparent = True
 
-    # Ensure a square image is produced.
+def set_image_size(resolution, camera):
+    """Set the image size to resolution x resolution in pixels."""
     old_resolution = max([
         bpy.context.scene.render.resolution_x,
         bpy.context.scene.render.resolution_y,
     ])
-    resolution = config.get("resolution", 1080)
     bpy.context.scene.render.resolution_x = resolution
     bpy.context.scene.render.resolution_y = resolution
 
@@ -265,17 +224,54 @@ def set_up_for_render(config):
     # See https://blender.stackexchange.com/a/105805/154615.
     camera.data.sensor_width *= resolution / old_resolution
 
-    # Use Cycles and hardware acceleration.
+
+def set_render_engine():
+    """Enable Cycles and hardware acceleration."""
     bpy.context.scene.render.engine = "CYCLES"
     bpy.context.scene.cycles.device = "GPU"
 
-    # Greatly reduce the sample count. OpenImageDenoise is on by default,
-    # and it does an excellent job.
-    bpy.context.scene.cycles.samples = config.get("samples", 128)
-    bpy.context.scene.cycles.preview_samples = config.get("preview_samples", 16)
 
-    # Improve contrast.
+def set_sample_count(samples, preview_samples):
+    """Adjust the Cycles sample count for the render and preview. The defaults are absurdly large
+    (4096 for the render!)."""
+    bpy.context.scene.cycles.samples = samples
+    bpy.context.scene.cycles.preview_samples = preview_samples
+
+
+def set_look():
+    """Set the Look setting in Color Management to High Contrast. This controls the nonlinear
+    mapping from physical units to color values that look good on a monitor or projector. See the
+    Blender docs on color management."""
     bpy.context.scene.view_settings.look = "High Contrast"
+
+
+def set_up_for_render(config):
+    """Given a dictionary of render configuration settings, set the following:
+
+    - Camera
+    - Environment texture
+    - Lighting
+    - Ambient occlusion
+    - Transparent background
+    - Image resolution
+    - Render engine
+    - Sample count
+    - Look
+    """
+    camera_longitude = math.radians(10)
+    camera = set_up_camera(camera_longitude)
+
+    set_up_environment(
+        config.get("environment_strength", 0.3),
+        config.get("environment_image", "//assets/studio_environment_2k.exr")
+    )
+    set_up_lights(camera_longitude)
+    set_ambient_occlusion()
+    set_transparent_background()
+    set_image_size(config.get("resolution", 1080), camera)
+    set_render_engine()
+    set_sample_count(config.get("samples", 16), config.get("preview_samples", 4))
+    set_look()
 
 
 def main():
@@ -291,11 +287,6 @@ def main():
     parser.add_argument(
         "dir",
         help="Input dir of Wavefront OBJ files.",
-    )
-    parser.add_argument(
-        "-p",
-        "--polytwister",
-        help="Name of polytwister.",
     )
     parser.add_argument(
         "-cs",
