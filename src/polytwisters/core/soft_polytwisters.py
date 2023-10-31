@@ -165,8 +165,6 @@ def get_all_soft_polytwisters():
         get_soft_dyadic_twister(3),
         get_soft_dyadic_twister(4),
         get_soft_dyadic_twister(5),
-        get_soft_dyadic_twister(6),
-        get_soft_dyadic_twister(7),
         get_soft_tetratwister(),
         get_soft_cubetwister(),
         get_soft_octatwister(),

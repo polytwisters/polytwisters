@@ -6,14 +6,6 @@ This repository is a project to clean up and port the original POV-Ray code (unp
 
 **This software is in an early stage of development.** You will probably have to make some minor changes to get it working on your machine.
 
-## Project structure
-
-* `src/polytwisters`: core libraries containing representations of polytwisters and tools for computing 3D sections.
-* `scripts`: Somewhat disorganized scripts for processing the output of the above scripts and computing animations.
-  * `blender_script.py` is a Blender Python script that takes a directory of .obj cross sections and rolls them into an animation with proper studio lighting and materials. It must be run with the Blender Python interpreter, not a standard Python interpreter.
-  * `blender_wrapper.py` is a small wrapper that runs `blender_script.py` with the Blender Python interpreter.
-  * `make_gif.py` converts a video to a GIF with ffmpeg, as animated GIF functionality is not provided by Blender.
-
 ## Basic usage
 
 I've managed to run this on macOS, Linux, and Windows. Requirements:
@@ -23,23 +15,26 @@ I've managed to run this on macOS, Linux, and Windows. Requirements:
 * Blender 3.3
 * ffmpeg if GIFs are desired.
 
+Set up repo:
+
 ```
 pdm install
 ```
 
-Generate 100 OBJ files for the cross sections of the tetratwister to the `tetratwister_obj` directory:
+Compute 50 cross sections of all currently entered polytwisters:
 
 ```
-pdm run hard_section tetratwister -n 100 -f obj tetratwister
+mkdir scratch
+pdm run all_sections -n 50 scratch/objs
 ```
 
-Load these files interactively as a Blender animation:
+Export .blend files:
 
 ```
-python scripts/blender_wrapper.py tetratwister_obj
+pdm run export_blends scratch/objs scratch/blends
 ```
 
-Initially the animation is at frame 1, which is empty. Drag around the animation frame to view different cross sections.
+When opening these Blender files, note that initially the animation is at frame 1, which is empty. Drag around the animation frame to view different cross sections.
 
 ## Other goodies
 

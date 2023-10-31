@@ -1,6 +1,5 @@
 import argparse
 import json
-import logging
 import pathlib
 
 import tqdm
@@ -12,14 +11,26 @@ from . import soft_polytwister_section
 
 
 def main():
-    logging.basicConfig(level=logging.INFO)
-
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-n",
+        "--num-frames",
+        type=int,
+        default=50,
+        help="Number of animation frames."
+    )
+    parser.add_argument(
+        "-sr",
+        "--soft-resolution",
+        type=int,
+        default=100,
+        help="Number of ring segments for soft polytwisters."
+    )
     parser.add_argument("out", type=str, help="Output directory.")
     args = parser.parse_args()
 
-    num_frames = 10
-    soft_polytwister_resolution = 100
+    num_frames = args.num_frames
+    soft_polytwister_resolution = args.soft_resolution
 
     root_out_dir = pathlib.Path(args.out)
     root_out_dir.mkdir(exist_ok=True)
@@ -36,15 +47,17 @@ def main():
         if out_dir.exists():
             polytwister_names.append(name)
             continue
-        logging.info(f"Computing {type_} polytwister '{name}'...")
+
+        tqdm.tqdm.write(f"Computing {type_} polytwister '{name}'...")
+
         if type_ == "soft":
             soft_polytwister_section.render_all_sections_as_objs(
                 polytwister, num_frames, soft_polytwister_resolution, out_dir
             )
         else:
             hard_polytwister_section.render_all_sections_as_objs(polytwister, num_frames, out_dir)
-        polytwister_names.append(name)
 
+        polytwister_names.append(name)
         with open(root_out_dir / "manifest.json", "w") as file:
             json.dump({
                 "polytwister_names": polytwister_names

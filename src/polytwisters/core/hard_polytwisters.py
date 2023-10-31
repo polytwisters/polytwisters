@@ -599,8 +599,6 @@ def get_all_hard_polytwisters():
         get_dyadic_twister(3),
         get_dyadic_twister(4),
         get_dyadic_twister(5),
-        get_dyadic_twister(6),
-        get_dyadic_twister(7),
         get_tetratwister(),
         get_quasitetratwister(),
         get_bloated_tetratwister(),
