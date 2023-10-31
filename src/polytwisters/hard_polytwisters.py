@@ -1,4 +1,4 @@
-"""This file defines polytwisters in a declarative, machine-readable
+"""This file defines hard polytwisters in a declarative, machine-readable
 representation, mainly using Boolean operations on cycloplanes. The
 encoding is entirely dicts, arrays, strings, and numbers, so that it
 is exportable as JSON to other languages and environments.

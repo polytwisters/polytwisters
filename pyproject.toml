@@ -17,3 +17,7 @@ license = {text = "MIT"}
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
+
+[tool.pdm.scripts]
+hard_section = {call = "polytwisters.hard_polytwister_section:main"}
+soft_section = {call = "polytwisters.soft_polytwister_section:main"}

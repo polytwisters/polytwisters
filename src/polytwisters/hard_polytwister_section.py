@@ -1,5 +1,7 @@
+"""Tools for converting descriptions of hard polytwisters into 3D cross sections using CadQuery.
+Can output Wavefront OBJ files and also SVG lineart.
+"""
 import argparse
-import json
 import math
 import logging
 import pathlib

@@ -1,3 +1,6 @@
+"""Tools for converting descriptions of soft polytwisters into 3D cross sections using CadQuery.
+Outputs Wavefront OBJ files.
+"""
 import collections
 import argparse
 import itertools

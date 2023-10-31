@@ -8,12 +8,7 @@ This repository is a project to clean up and port the original POV-Ray code (unp
 
 ## Project structure
 
-This software has many components due to some feature creep, and has gotten fairly messy. However, those components are fairly cleanly separated.
-
-* `core`: All geometric specifications of polytwisters, and code to compute them as meshes.
-  * `hard_polytwisters.py` and `soft_polytwisters.py` contain declarative definitions of polytwisters based on the locations of their rings or cycloplanes. These scripts are nearly dependency-free, although `soft_polytwisters.py` requires NumPy.
-  * `make_soft_polytwister.py` takes definitions from `soft_polytwisters.py` and renders a cross section as a Wavefront OBJ file. It requires SciPy for 4D and 3D convex hull computation (which internally uses QHull).
-  * `make_hard_polytwister.py` takes a definition from `hard_polytwisters.py` and allows rendering a single Wavefront OBJ cross section, a directory of .obj cross sections, a single .svg file, or a montage of .svg files. It requires CadQuery. Unfortunately CadQuery does not run on Python 3.11 as of this writing due a dependency on nlopt, so you will nee to use Python 3.8-3.10.
+* `src/polytwisters`: core libraries containing representations of polytwisters and tools for computing 3D sections.
 * `scripts`: Somewhat disorganized scripts for processing the output of the above scripts and computing animations.
   * `blender_script.py` is a Blender Python script that takes a directory of .obj cross sections and rolls them into an animation with proper studio lighting and materials. It must be run with the Blender Python interpreter, not a standard Python interpreter.
   * `blender_wrapper.py` is a small wrapper that runs `blender_script.py` with the Blender Python interpreter.
@@ -23,8 +18,8 @@ This software has many components due to some feature creep, and has gotten fair
 
 I've managed to run this on macOS, Linux, and Windows. Requirements:
 
+* Python 3.10 and PDM
 * Blender 3.3
-* Python 3.8-3.10 with these deps: `pip install numpy scipy cadquery`. Python 3.11 does NOT work as of this writing.
 * ffmpeg for GIF conversion.
 
 Generate 100 OBJ files for the cross sections of the tetratwister to the `tetratwister_obj` directory:
