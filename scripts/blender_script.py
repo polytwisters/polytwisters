@@ -294,12 +294,6 @@ def main():
         help="Config JSON string.",
     )
     parser.add_argument(
-        "-r",
-        "--remesh",
-        action="store_true",
-        help="Add a remesh modifier. Usually needed for soft polytwisters.",
-    )
-    parser.add_argument(
         "-o",
         "--output",
         help="If provided, saves a .blend file to the given location.",
@@ -314,8 +308,6 @@ def main():
         argv = []
     args = parser.parse_args(argv)
 
-    remesh = args.remesh
-
     # Delete the default objects.
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
@@ -328,10 +320,13 @@ def main():
     material_config = config.get("material", {})
     material = None
 
-    # Find all .obj files and sort in alphanumerical order.
     directory = pathlib.Path(args.dir)
-    obj_paths = [path for path in directory.glob("*.obj")]
-    obj_paths.sort()
+    with open(directory / "metadata.json") as file:
+        metadata = json.load(file)
+
+    polytwister_spec = metadata["polytwister_spec"]
+    obj_paths = [directory / file_name for file_name in metadata["file_names"]]
+    remesh = polytwister_spec["type"] == "soft"
 
     num_frames = len(obj_paths)
     # One empty frame is added to the beginning and end of the animation.

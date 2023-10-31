@@ -2,13 +2,14 @@ import collections
 import argparse
 import itertools
 import math
+import pathlib
 
 import numpy as np
-import pathlib
 import scipy.spatial
 import scipy.spatial.transform
 
-import soft_polytwisters
+from . import common
+from . import soft_polytwisters
 
 
 def quat_to_4d_matrix(q):
@@ -181,9 +182,13 @@ def get_w_coordinates_and_file_names(num_frames):
 
 def render_all_sections_as_objs(polytwister, num_frames, resolution, out_dir):
     out_dir.mkdir()
+    file_names = []
     for w, file_stem in get_w_coordinates_and_file_names(num_frames):
-        out_file = out_dir / (file_stem + ".obj")
+        file_name = file_stem + ".obj"
+        out_file = out_dir / file_name
         render_one_section_as_obj(polytwister, w, resolution, out_file)
+        file_names.append(file_name)
+    common.write_metadata_file(polytwister, file_names, out_dir)
 
 
 def main():
@@ -202,6 +207,7 @@ def main():
     )
     parser.add_argument(
         "-n",
+        "--num-frames",
         type=int,
         help="Number of frames."
     )
@@ -229,15 +235,10 @@ def main():
     w = args.w
     num_frames = args.num_frames
     out_path = pathlib.Path(args.out)
-    polytwister_name = args.polytwister
-    polytwister_name = polytwister_name.replace("_", " ")
+    polytwister_name = common.normalize_polytwister_name(args.polytwister)
     resolution = args.resolution
 
-    for polytwister in soft_polytwisters.get_all_soft_polytwisters():
-        if polytwister_name in polytwister["names"]:
-            break
-    else:
-        raise ValueError(f'Polytwister "{polytwister_name}" not found.')
+    polytwister = soft_polytwisters.get_all_soft_polytwisters()[polytwister_name]
 
     if w is None and num_frames is None:
         raise ValueError(

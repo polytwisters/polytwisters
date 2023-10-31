@@ -1,0 +1,19 @@
+[project]
+name = "polytwisters"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Nathan Ho"},
+]
+dependencies = [
+    "scipy",
+    "numpy",
+    "cadquery"
+]
+requires-python = "==3.10"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"

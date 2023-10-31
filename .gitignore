@@ -6,4 +6,5 @@ __pycache__
 *.obj
 *.stl
 
-twilio_config.json
+scratch*
+.pdm-python

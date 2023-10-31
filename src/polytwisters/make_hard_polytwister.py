@@ -1,4 +1,5 @@
 import argparse
+import json
 import math
 import logging
 import pathlib
@@ -6,8 +7,9 @@ import pathlib
 import cadquery
 import cadquery.utils
 
-import hard_polytwisters
-from cadquery_to_svg import export_svg, render_as_polylines, export_montage_as_svg
+from . import common
+from . import hard_polytwisters
+from .cadquery_to_svg import export_svg, render_as_polylines, export_montage_as_svg
 
 LARGE = 100.0
 EPSILON = 1e-3
@@ -315,7 +317,8 @@ def get_w_coordinates_and_file_names(polytwister, num_frames, max_w):
         # frames being empty, so we leave those out.
         w = -max_w + max_w * 2 * (i + 1) / (num_frames + 1)
         file_stem = f"out_{str(i).rjust(num_digits, '0')}"
-        yield w, file_stem
+        frame_number = i + 1
+        yield frame_number, w, file_stem
 
 
 def render_one_section_as_obj(polytwister, w, out_file, normalize=False, scale=1.0):
@@ -348,7 +351,8 @@ def render_svg_montage(polytwister, num_frames):
 def render_all_sections_as_svgs(polytwister, num_frames, out_dir):
     out_dir.mkdir()
     scale, max_w = get_scale_and_max_w(polytwister)
-    for w, file_stem in get_w_coordinates_and_file_names(polytwister, num_frames, max_w):
+    for frame_number, w, file_stem in get_w_coordinates_and_file_names(polytwister, num_frames, max_w):
+        logging.debug(f"Computing frame {frame_number} of {num_frames}.")
         out_file = out_dir / (file_stem + ".svg")
         render_one_section_as_svg(polytwister, w, out_file, scale=scale)
 
@@ -356,10 +360,14 @@ def render_all_sections_as_svgs(polytwister, num_frames, out_dir):
 def render_all_sections_as_objs(polytwister, num_frames, out_dir):
     out_dir.mkdir()
     scale, max_w = get_scale_and_max_w(polytwister)
-    for w, file_stem in get_w_coordinates_and_file_names(polytwister, num_frames, max_w):
-        out_file = out_dir / (file_stem + ".obj")
+    file_names = []
+    for frame_number, w, file_stem in get_w_coordinates_and_file_names(polytwister, num_frames, max_w):
+        logging.debug(f"Computing frame {frame_number} of {num_frames}.")
+        file_name = file_stem + ".obj"
+        out_file = out_dir / file_name
         render_one_section_as_obj(polytwister, w, out_file, scale=scale)
-
+        file_names.append(file_name)
+    common.write_metadata_file(polytwister, file_names, out_dir)
 
 
 def main():
@@ -378,6 +386,7 @@ def main():
     )
     parser.add_argument(
         "-n",
+        "--num-frames",
         type=int,
         help="Number of frames.",
     )
@@ -398,14 +407,9 @@ def main():
     w = args.w
     num_frames = args.num_frames
     out_path = pathlib.Path(args.out)
-    polytwister_name = args.polytwister
-    polytwister_name = polytwister_name.replace("_", " ")
+    polytwister_name = common.normalize_polytwister_name(args.polytwister)
 
-    for polytwister in hard_polytwisters.get_all_hard_polytwisters():
-        if polytwister_name in polytwister["names"]:
-            break
-    else:
-        raise ValueError(f'Polytwister "{polytwister_name}" not found.')
+    polytwister = hard_polytwisters.get_all_hard_polytwisters()[polytwister_name]
 
     if w is None and num_frames is None:
         raise ValueError(
@@ -431,7 +435,7 @@ def main():
         if w is not None:
             render_one_section_as_obj(polytwister, w, out_path, normalize=True)
         elif num_frames is not None:
-            render_all_sections_as_svgs(polytwister, num_frames, out_path)
+            render_all_sections_as_objs(polytwister, num_frames, out_path)
 
     else:
         raise ValueError('Unsupported format: {args.format}')
