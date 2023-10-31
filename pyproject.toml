@@ -8,7 +8,8 @@ authors = [
 dependencies = [
     "scipy",
     "numpy",
-    "cadquery"
+    "cadquery",
+    "tqdm>=4.66.1",
 ]
 requires-python = "~=3.10"
 readme = "README.md"
@@ -19,5 +20,7 @@ requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
 [tool.pdm.scripts]
-hard_section = {call = "polytwisters.hard_polytwister_section:main"}
-soft_section = {call = "polytwisters.soft_polytwister_section:main"}
+hard_section = {call = "polytwisters.core.hard_polytwister_section:main"}
+soft_section = {call = "polytwisters.core.soft_polytwister_section:main"}
+all_sections = {call = "polytwisters.core.batch:main"}
+export_blends = {call = "polytwisters.blender.export_blends:main"}

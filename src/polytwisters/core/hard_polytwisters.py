@@ -624,6 +624,6 @@ def get_all_hard_polytwisters():
     ]
     result = {}
     for polytwister in polytwisters_list:
-        polytwister["type"] = "soft"
+        polytwister["type"] = "hard"
         result[polytwister["names"][0]] = polytwister
     return result

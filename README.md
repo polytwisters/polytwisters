@@ -18,14 +18,19 @@ This repository is a project to clean up and port the original POV-Ray code (unp
 
 I've managed to run this on macOS, Linux, and Windows. Requirements:
 
-* Python 3.10 and PDM
+* Python 3.10 (Python 3.11 does not work due to the CadQuery dependency)
+* [PDM](https://pdm.fming.dev/latest/)
 * Blender 3.3
-* ffmpeg for GIF conversion.
+* ffmpeg if GIFs are desired.
+
+```
+pdm install
+```
 
 Generate 100 OBJ files for the cross sections of the tetratwister to the `tetratwister_obj` directory:
 
 ```
-python core/make_hard_polytwister.py tetratwister -n 100 -f obj tetratwister_obj/
+pdm run hard_section tetratwister -n 100 -f obj tetratwister
 ```
 
 Load these files interactively as a Blender animation:
