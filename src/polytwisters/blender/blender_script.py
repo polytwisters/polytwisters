@@ -22,6 +22,9 @@ DEFAULT_CYLINDER_RESOLUTION = 64
 DEFAULT_SCALE = 20e-2 / 2
 
 
+HDRI_PATH = pathlib.Path(__file__).resolve().parent.parent / "assets/studio_environment_2k.exr"
+
+
 def deselect_all():
     bpy.ops.object.select_all(action="DESELECT")
 
@@ -261,7 +264,7 @@ def set_up_for_render(config):
 
     set_up_environment(
         config.get("environment_strength", 0.3),
-        config.get("environment_image", "//assets/studio_environment_2k.exr")
+        config.get("environment_image", str(HDRI_PATH))
     )
     set_up_lights(camera_longitude)
     set_ambient_occlusion()
@@ -380,7 +383,10 @@ def main():
     if args.output:
         # save_as_mainfile doesn't like relative paths, convert to absolute.
         path = pathlib.Path(args.output).resolve()
-        bpy.ops.wm.save_as_mainfile(filepath=str(path))
+        # Pack resources
+        bpy.ops.file.pack_all()
+        # For info on relative_remap: https://blender.stackexchange.com/a/124861/154615
+        bpy.ops.wm.save_as_mainfile(filepath=str(path), relative_remap=False)
 
 
 if __name__ == "__main__":

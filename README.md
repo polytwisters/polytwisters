@@ -12,7 +12,7 @@ I've managed to run this on macOS, Linux, and Windows. Requirements:
 
 * Python 3.10 (Python 3.11 does not work due to the CadQuery dependency)
 * [PDM](https://pdm.fming.dev/latest/), a Python package manager
-* git-lfs when checking out the repository. There is a single HDRI used for rendering.
+* git-lfs when checking out the repository. There is a single HDRI used for rendering, although not very big (only 4 kB).
 * Blender 3.3 for rendering
 * ffmpeg to 
 
