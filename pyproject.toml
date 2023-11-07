@@ -20,7 +20,9 @@ requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
 [tool.pdm.scripts]
-hard_section = {call = "polytwisters.core.hard_polytwister_section:main"}
-soft_section = {call = "polytwisters.core.soft_polytwister_section:main"}
-all_sections = {call = "polytwisters.core.batch:main"}
-export_blends = {call = "polytwisters.blender.export_blends:main"}
+compute_hard_section = {call = "polytwisters.core.hard_polytwister_section:main"}
+compute_soft_section = {call = "polytwisters.core.soft_polytwister_section:main"}
+compute_all_sections = {call = "polytwisters.core.batch:main"}
+export_blend = {call = "polytwisters.blender.export_blends:main"}
+render_blend = {call = "polytwisters.blender.render_blends:main"}
+run_full_pipeline = {call = "polytwisters.pipeline:main"}

@@ -8,6 +8,8 @@ import pathlib
 
 import cadquery
 import cadquery.utils
+import numpy as np
+import tqdm
 
 from . import common
 from . import hard_polytwisters
@@ -207,10 +209,8 @@ def discretize_workplane(workplane, tolerance=0.1, angular_tolerance=0.1):
 
 def write_mesh_as_obj(mesh, file):
     vertices, triangles = mesh
-    for point in vertices:
-        file.write(f"v {point.x} {point.y} {point.z}\n")
-    for triangle in triangles:
-        file.write(f"f {triangle[0] + 1} {triangle[1] + 1} {triangle[2] + 1}\n")
+    vertices = np.array([[point.x, point.y, point.z] for point in vertices])
+    common.write_obj(vertices, triangles, file)
 
 
 def get_max_distance_from_origin(polytwister, w):
@@ -313,6 +313,7 @@ def normalize_mesh(mesh):
 
 def get_w_coordinates_and_file_names(polytwister, num_frames, max_w):
     num_digits = int(math.ceil(math.log10(num_frames)))
+    result = []
     for i in range(num_frames):
         # Originally this was -max_w + max_w * 2 * i / (num_frames - 1) so the first frame has
         # w = -max_w and the final frame has w = max_w, but that results in the first and final
@@ -320,7 +321,8 @@ def get_w_coordinates_and_file_names(polytwister, num_frames, max_w):
         w = -max_w + max_w * 2 * (i + 1) / (num_frames + 1)
         file_stem = f"out_{str(i).rjust(num_digits, '0')}"
         frame_number = i + 1
-        yield frame_number, w, file_stem
+        result.append((frame_number, w, file_stem))
+    return result
 
 
 def render_one_section_as_obj(polytwister, w, out_file, normalize=False, scale=1.0):
@@ -341,35 +343,44 @@ def render_one_section_as_svg(polytwister, w, out_file, normalize=False, scale=1
         f.write(svg_document)
 
 
-def render_svg_montage(polytwister, num_frames):
+def render_svg_montage(polytwister, num_frames, progress_bar=False):
     polylines_list = []
     scale, max_w = get_scale_and_max_w(polytwister)
-    for w, file_stem in get_w_coordinates_and_file_names(polytwister, num_frames, max_w):
+    iterable = get_w_coordinates_and_file_names(polytwister, num_frames, max_w)
+    if progress_bar:
+        iterable = tqdm.tqdm(iterable, f"Computing SVG montage for '{polytwister['name']}'")
+    for w, file_stem in iterable:
         workplane = make_polytwister_cross_section(polytwister, w)
         polylines_list.append(render_as_polylines(workplane))
     return export_montage_as_svg(polylines_list, scale)
 
 
-def render_all_sections_as_svgs(polytwister, num_frames, out_dir):
+def render_all_sections_as_svgs(polytwister, num_frames, out_dir, progress_bar=False):
     out_dir.mkdir()
     scale, max_w = get_scale_and_max_w(polytwister)
-    for frame_number, w, file_stem in get_w_coordinates_and_file_names(polytwister, num_frames, max_w):
+    iterable = get_w_coordinates_and_file_names(polytwister, num_frames, max_w)
+    if progress_bar:
+        iterable = tqdm.tqdm(iterable, f"Computing SVG lineart for '{polytwister['name']}'")
+    for frame_number, w, file_stem in iterable:
         logging.debug(f"Computing frame {frame_number} of {num_frames}.")
         out_file = out_dir / (file_stem + ".svg")
         render_one_section_as_svg(polytwister, w, out_file, scale=scale)
 
 
-def render_all_sections_as_objs(polytwister, num_frames, out_dir):
+def render_all_sections_as_objs(polytwister, num_frames, out_dir, progress_bar=False):
     out_dir.mkdir()
     scale, max_w = get_scale_and_max_w(polytwister)
     file_names = []
-    for frame_number, w, file_stem in get_w_coordinates_and_file_names(polytwister, num_frames, max_w):
+    iterable = get_w_coordinates_and_file_names(polytwister, num_frames, max_w)
+    if progress_bar:
+        iterable = tqdm.tqdm(iterable, f"Computing meshes for '{polytwister['name']}'")
+    for frame_number, w, file_stem in iterable:
         logging.debug(f"Computing frame {frame_number} of {num_frames}.")
         file_name = file_stem + ".obj"
         out_file = out_dir / file_name
         render_one_section_as_obj(polytwister, w, out_file, scale=scale)
         file_names.append(file_name)
-    common.write_metadata_file(polytwister, file_names, out_dir)
+    common.write_manifest_file(polytwister, file_names, out_dir)
 
 
 def main():

@@ -11,9 +11,10 @@ This repository is a project to clean up and port the original POV-Ray code (unp
 I've managed to run this on macOS, Linux, and Windows. Requirements:
 
 * Python 3.10 (Python 3.11 does not work due to the CadQuery dependency)
-* [PDM](https://pdm.fming.dev/latest/)
-* Blender 3.3
-* ffmpeg if GIFs are desired.
+* [PDM](https://pdm.fming.dev/latest/), a Python package manager
+* git-lfs when checking out the repository. There is a single HDRI used for rendering.
+* Blender 3.3 for rendering
+* ffmpeg to 
 
 Set up repo:
 
@@ -21,20 +22,40 @@ Set up repo:
 pdm install
 ```
 
-Compute 50 cross sections of all currently entered polytwisters:
+### Single render
+
+Compute 10 cross sections of the bloated tetratwister:
 
 ```
 mkdir scratch
-pdm run all_sections -n 50 scratch/objs
+pdm run compute_hard_section -n 50 tetratwister scratch/tetratwister_sections/
 ```
 
-Export .blend files:
+Export .blend file, which has cameras, lights, and render configuration all set up for you:
 
 ```
-pdm run export_blends scratch/objs scratch/blends
+pdm run export_blend scratch/tetratwister_sections scratch/tetratwister.blend
 ```
 
-When opening these Blender files, note that initially the animation is at frame 1, which is empty. Drag around the animation frame to view different cross sections.
+You can open this file in Blender to see the animation. When opening this file, note that initially the animation is at frame 1, which is empty. Drag around the animation frame to view the cross sections.
+
+To render with standard settings, you can just open Blender, or this script:
+
+```
+pdm run render_blend scratch/tetratwister.blend scratch/tetratwister.mp4
+```
+
+### Render everything
+
+```
+mkdir scratch
+# Compute meshes.
+pdm run compute_all_sections -n 50 scratch/sections/
+# Export blend files.
+pdm run export_blend scratch/sections/ scratch/blends/
+# Render blend files.
+pdm run render_blend scratch/sections/ scratch/videos/
+```
 
 ## Other goodies
 

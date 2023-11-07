@@ -60,6 +60,7 @@ def main():
         polytwister_names.append(name)
         with open(root_out_dir / "manifest.json", "w") as file:
             json.dump({
+                "directory_type": "sections_of_multiple_polytwisters",
                 "polytwister_names": polytwister_names
             }, file)
 

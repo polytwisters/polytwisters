@@ -159,13 +159,10 @@ def get_soft_polytwister_cross_section(soft_polytwister_spec, w, resolution=200)
     return get_cross_section(soft_polytwister, w)
 
 
-def write_hull_as_obj(hull_3d, f):
+def write_hull_as_obj(hull_3d, file):
     """Given a 3D scipy.spatial.ConvexHull and a writable file-like object, write the hull as a
     Wavefront OBJ file."""
-    for point in hull_3d.points:
-        f.write(f"v {point[0]} {point[1]} {point[2]}\n")
-    for triangle in hull_3d.simplices:
-        f.write(f"f {triangle[0] + 1} {triangle[1] + 1} {triangle[2] + 1}\n")
+    common.write_obj(hull_3d.points, hull_3d.simplices, file)
 
 
 def render_one_section_as_obj(polytwister, w, resolution, out_file):
@@ -191,7 +188,7 @@ def render_all_sections_as_objs(polytwister, num_frames, resolution, out_dir):
         out_file = out_dir / file_name
         render_one_section_as_obj(polytwister, w, resolution, out_file)
         file_names.append(file_name)
-    common.write_metadata_file(polytwister, file_names, out_dir)
+    common.write_manifest_file(polytwister, file_names, out_dir)
 
 
 def main():

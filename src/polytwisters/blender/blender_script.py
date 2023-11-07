@@ -319,7 +319,7 @@ def main():
     material = None
 
     directory = pathlib.Path(args.dir)
-    with open(directory / "metadata.json") as file:
+    with open(directory / "manifest.json") as file:
         metadata = json.load(file)
 
     polytwister_spec = metadata["polytwister_spec"]

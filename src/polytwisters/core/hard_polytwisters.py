@@ -623,5 +623,7 @@ def get_all_hard_polytwisters():
     result = {}
     for polytwister in polytwisters_list:
         polytwister["type"] = "hard"
-        result[polytwister["names"][0]] = polytwister
+        name = polytwister["names"][0]
+        polytwister["name"] = name
+        result[name] = polytwister
     return result
