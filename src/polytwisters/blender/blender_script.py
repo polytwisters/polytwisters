@@ -290,11 +290,6 @@ def main():
         help="Input dir of Wavefront OBJ files.",
     )
     parser.add_argument(
-        "-cs",
-        "--config-string",
-        help="Config JSON string.",
-    )
-    parser.add_argument(
         "-o",
         "--output",
         help="If provided, saves a .blend file to the given location.",
@@ -313,17 +308,21 @@ def main():
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
 
+    directory = pathlib.Path(args.dir)
+    with open(directory / "manifest.json") as file:
+        metadata = json.load(file)
+
     config = {}
-    if args.config_string is not None:
-        config = json.loads(args.config_string)
+    try:
+        with open(directory / "config.json") as file:
+            config = json.load(file)
+    except FileNotFoundError:
+        pass
+
     render_config = config.get("render", {})
     set_up_for_render(render_config)
     material_config = config.get("material", {})
     material = None
-
-    directory = pathlib.Path(args.dir)
-    with open(directory / "manifest.json") as file:
-        metadata = json.load(file)
 
     polytwister_spec = metadata["polytwister_spec"]
     obj_paths = [directory / file_name for file_name in metadata["file_names"]]

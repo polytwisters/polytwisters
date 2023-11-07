@@ -3,72 +3,15 @@
     "render": {
       "environment_strength": 0.3,
       "samples": 16
+    },
+    "material": {
+      "Base Color": [
+        0.448,
+        0.0,
+        0.0,
+        1
+      ],
+      "Roughness": 0.5
     }
-  },
-  "polytwisters": [
-    {
-      "name": "soft_tetratwister",
-      "material": {
-        "Base Color": [0.327, 0.217, 0.595, 1],
-        "Roughness": 0.15,
-        "Subsurface": 0.203,
-        "Subsurface Radius": [0.02, 0.02, 0.02],
-        "Subsurface Color": [0.327, 0.217, 0.595, 1],
-        "Transmission": 0.05,
-        "Clearcoat": 1.0,
-        "Clearcoat Roughness": 0.03
-      }
-    },
-    {
-      "name": "soft_cubetwister",
-      "material": {
-        "Base Color": [0.0634336, 0.493001, 0.8, 1],
-        "Roughness": 0.1,
-        "Transmission": 0.7
-      }
-    },
-    {
-      "name": "soft_octatwister",
-      "material": {
-        "Base Color": [0.8, 0.521, 0.0, 1],
-        "Metallic": 1.0,
-        "Roughness": 0.079
-      }
-    },
-    {
-      "name": "soft_dodecatwister",
-      "material": {
-        "Base Color": [0.144, 0.0, 0.0, 1],
-        "Subsurface": 0.792,
-        "Subsurface Radius": [0.1, 0.1, 0.1],
-        "Subsurface Color": [0.144, 0.0, 0.0, 1],
-        "Roughness": 0.210
-      }
-    },
-    {
-      "name": "soft_icosatwister",
-      "material": {
-        "Base Color": [0.234, 0.910, 0.386, 1],
-        "Roughness": 0.1
-      }
-    },
-    {
-      "name": "bloated_octatwister",
-      "material": {
-        "Base Color": [0.735, 0.436, 1.0, 1],
-        "Roughness": 0.1,
-        "Specular": 0.5
-      }
-    },
-    {
-      "name": "bloated_icosatwister",
-      "material": {
-        "Base Color": [1.0, 0.237, 0.099, 1],
-        "Subsurface": 0.210,
-        "Subsurface Radius": [0.05, 0.01, 0.01],
-        "Subsurface Color": [0.889, 0.628, 0.462, 1],
-        "Roughness": 0.121
-      }
-    }
-  ]
+  }
 }

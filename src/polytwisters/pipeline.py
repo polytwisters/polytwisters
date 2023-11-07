@@ -1,4 +1,5 @@
 import argparse
+import json
 import pathlib
 
 from .core import all_polytwisters
@@ -22,6 +23,14 @@ def main():
     if num_frames > 10_000:
         raise ValueError("Too many frames (> 10,000).")
 
+    with open("config.json") as file:
+        full_config = json.load(file)
+    config = {}
+    config.update(full_config.get("defaults", {}))
+    config.update(
+        full_config.get("polytwisters", {}).get(polytwister_name, {})
+    )
+
     root_dir = pathlib.Path(args.out_dir)
     root_dir.mkdir(parents=True, exist_ok=True)
     sections_dir = root_dir / "sections"
@@ -36,6 +45,8 @@ def main():
         hard_polytwister_section.render_all_sections_as_objs(
             polytwister, num_frames, sections_dir, progress_bar=True
         )
+        with open(sections_dir / "config.json", "x") as file:
+            json.dump(config, file)
     if not blend_file.exists():
         export_blends.export_directory_as_blend(sections_dir, blend_file)
     if not render_frames_dir.exists():
