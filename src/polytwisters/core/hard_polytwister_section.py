@@ -193,7 +193,11 @@ def make_polytwister_cross_section(polytwister, w):
     return workplane
 
 
-def discretize_workplane(workplane, tolerance=0.1, angular_tolerance=0.1):
+def discretize_workplane(
+        workplane,
+        tolerance=common.DEFAULT_HARD_POLYTWISTER_TOLERANCE,
+        angular_tolerance=common.DEFAULT_HARD_POLYTWISTER_ANGULAR_TOLERANCE,
+):
     """Given a workplane containing a single shape, return a tuple comprising a set of vertices and
     triangles. The vertices are a list of cadquery.Vectors, and the triangles a list of 3-tuples of
     ints indexing into the vertex list. Vertex indices start at 0."""
@@ -311,7 +315,7 @@ def normalize_mesh(mesh):
     return vertices, triangles
 
 
-def get_w_coordinates_and_file_names(polytwister, num_frames, max_w):
+def get_w_coordinates_and_file_names(num_frames, max_w):
     num_digits = int(math.ceil(math.log10(num_frames)))
     result = []
     for i in range(num_frames):
@@ -325,9 +329,17 @@ def get_w_coordinates_and_file_names(polytwister, num_frames, max_w):
     return result
 
 
-def render_one_section_as_obj(polytwister, w, out_file, normalize=False, scale=1.0):
+def render_one_section_as_obj(
+        polytwister,
+        w,
+        out_file,
+        normalize=False,
+        scale=1.0,
+        tolerance=common.DEFAULT_HARD_POLYTWISTER_TOLERANCE,
+        angular_tolerance=common.DEFAULT_HARD_POLYTWISTER_ANGULAR_TOLERANCE,
+):
     workplane = make_polytwister_cross_section(polytwister, w)
-    mesh = discretize_workplane(workplane)
+    mesh = discretize_workplane(workplane, tolerance=tolerance, angular_tolerance=angular_tolerance)
     if normalize:
         mesh = normalize_mesh(mesh)
     if scale != 1.0:
@@ -346,7 +358,7 @@ def render_one_section_as_svg(polytwister, w, out_file, normalize=False, scale=1
 def render_svg_montage(polytwister, num_frames, progress_bar=False):
     polylines_list = []
     scale, max_w = get_scale_and_max_w(polytwister)
-    iterable = get_w_coordinates_and_file_names(polytwister, num_frames, max_w)
+    iterable = get_w_coordinates_and_file_names(num_frames, max_w)
     if progress_bar:
         iterable = tqdm.tqdm(iterable, f"Computing SVG montage for '{polytwister['name']}'")
     for w, file_stem in iterable:
@@ -358,7 +370,7 @@ def render_svg_montage(polytwister, num_frames, progress_bar=False):
 def render_all_sections_as_svgs(polytwister, num_frames, out_dir, progress_bar=False):
     out_dir.mkdir()
     scale, max_w = get_scale_and_max_w(polytwister)
-    iterable = get_w_coordinates_and_file_names(polytwister, num_frames, max_w)
+    iterable = get_w_coordinates_and_file_names(num_frames, max_w)
     if progress_bar:
         iterable = tqdm.tqdm(iterable, f"Computing SVG lineart for '{polytwister['name']}'")
     for frame_number, w, file_stem in iterable:
@@ -367,24 +379,45 @@ def render_all_sections_as_svgs(polytwister, num_frames, out_dir, progress_bar=F
         render_one_section_as_svg(polytwister, w, out_file, scale=scale)
 
 
-def render_all_sections_as_objs(polytwister, num_frames, out_dir, progress_bar=False):
+def render_all_sections_as_objs(
+        polytwister,
+        num_frames,
+        out_dir,
+        *,
+        progress_bar=False,
+        tolerance=common.DEFAULT_HARD_POLYTWISTER_TOLERANCE,
+        angular_tolerance=common.DEFAULT_HARD_POLYTWISTER_ANGULAR_TOLERANCE,
+):
     out_dir.mkdir()
     scale, max_w = get_scale_and_max_w(polytwister)
     file_names = []
-    iterable = get_w_coordinates_and_file_names(polytwister, num_frames, max_w)
+    iterable = get_w_coordinates_and_file_names(num_frames, max_w)
     if progress_bar:
         iterable = tqdm.tqdm(iterable, f"Computing meshes for '{polytwister['name']}'")
     for frame_number, w, file_stem in iterable:
         logging.debug(f"Computing frame {frame_number} of {num_frames}.")
         file_name = file_stem + ".obj"
         out_file = out_dir / file_name
-        render_one_section_as_obj(polytwister, w, out_file, scale=scale)
+        render_one_section_as_obj(
+            polytwister,
+            w,
+            out_file,
+            scale=scale,
+            tolerance=tolerance,
+            angular_tolerance=angular_tolerance,
+        )
         file_names.append(file_name)
     common.write_manifest_file(polytwister, file_names, out_dir)
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    app_name = "compute_hard_section"
+    parser = argparse.ArgumentParser(description=f"""
+        Render hard polytwister cross sections. 
+        
+        # Render a single polytwister:
+        {app_name} -n 100 -f svg_montage
+    """)
     parser.add_argument(
         "polytwister",
         help="Name of the polytwister. For convenience, underscores are replaced with spaces.",
@@ -434,7 +467,7 @@ def main():
         raise ValueError(f"You cannot specify both -w and -n.")
 
     if args.format == "svg_montage":
-        document = render_svg_montage(polytwister, num_frames)
+        document = render_svg_montage(polytwister, num_frames, progress_bar=True)
         with open(out_path, "x") as f:
             f.write(document)
 
@@ -442,13 +475,13 @@ def main():
         if w is not None:
             render_one_section_as_svg(polytwister, w, out_path, normalize=True)
         elif num_frames is not None:
-            render_all_sections_as_svgs(polytwister, num_frames, out_path)
+            render_all_sections_as_svgs(polytwister, num_frames, out_path, progress_bar=True)
 
     elif args.format == "obj":
         if w is not None:
             render_one_section_as_obj(polytwister, w, out_path, normalize=True)
         elif num_frames is not None:
-            render_all_sections_as_objs(polytwister, num_frames, out_path)
+            render_all_sections_as_objs(polytwister, num_frames, out_path, progress_bar=True)
 
     else:
         raise ValueError('Unsupported format: {args.format}')

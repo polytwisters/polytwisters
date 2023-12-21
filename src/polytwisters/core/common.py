@@ -5,6 +5,10 @@ import json
 
 VERSION = "0.1.0"
 
+DEFAULT_SOFT_POLYTWISTER_RESOLUTION = 100
+DEFAULT_HARD_POLYTWISTER_TOLERANCE = 1e-2
+DEFAULT_HARD_POLYTWISTER_ANGULAR_TOLERANCE = 0.1
+
 
 def write_obj(vertices: np.ndarray, triangles: np.ndarray, file: io.FileIO):
     for row in vertices:

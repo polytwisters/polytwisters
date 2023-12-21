@@ -10,6 +10,7 @@ import pathlib
 import numpy as np
 import scipy.spatial
 import scipy.spatial.transform
+import tqdm
 
 from . import common
 from . import soft_polytwisters
@@ -143,7 +144,6 @@ def merge_hulls(hulls):
     )
 
 
-
 def get_soft_polytwister_cross_section(soft_polytwister_spec, w, resolution=200):
     if soft_polytwister_spec.get("compound", False):
         components = []
@@ -165,7 +165,13 @@ def write_hull_as_obj(hull_3d, file):
     common.write_obj(hull_3d.points, hull_3d.simplices, file)
 
 
-def render_one_section_as_obj(polytwister, w, resolution, out_file):
+def render_one_section_as_obj(
+        polytwister,
+        w,
+        out_file,
+        *,
+        resolution=common.DEFAULT_SOFT_POLYTWISTER_RESOLUTION,
+):
     cross_section = get_soft_polytwister_cross_section(polytwister, w, resolution)
     with open(out_file, "x") as f:
         if cross_section is not None:
@@ -180,13 +186,23 @@ def get_w_coordinates_and_file_names(num_frames):
         yield w, file_stem
 
 
-def render_all_sections_as_objs(polytwister, num_frames, resolution, out_dir):
+def render_all_sections_as_objs(
+        polytwister,
+        num_frames,
+        out_dir,
+        *,
+        progress_bar=False,
+        resolution=common.DEFAULT_SOFT_POLYTWISTER_RESOLUTION,
+):
     out_dir.mkdir()
     file_names = []
-    for w, file_stem in get_w_coordinates_and_file_names(num_frames):
+    iterable = get_w_coordinates_and_file_names(num_frames)
+    if progress_bar:
+        iterable = tqdm.tqdm(iterable)
+    for w, file_stem in iterable:
         file_name = file_stem + ".obj"
         out_file = out_dir / file_name
-        render_one_section_as_obj(polytwister, w, resolution, out_file)
+        render_one_section_as_obj(polytwister, w, out_file, resolution=resolution)
         file_names.append(file_name)
     common.write_manifest_file(polytwister, file_names, out_dir)
 
@@ -251,12 +267,12 @@ def main():
 
     if args.format == "obj":
         if w is not None:
-            render_one_section_as_obj(polytwister, w, resolution, out_path)
+            render_one_section_as_obj(polytwister, w, out_path, resolution=resolution)
         elif num_frames is not None:
-            render_all_sections_as_objs(polytwister, num_frames, resolution, out_path)
+            render_all_sections_as_objs(polytwister, num_frames, out_path, resolution=resolution)
 
     else:
-        raise ValueError('Unsupported format: {args.format}')
+        raise ValueError(f"Unsupported format: {args.format}")
 
 
 if __name__ == "__main__":

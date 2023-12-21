@@ -3,6 +3,7 @@ import json
 import pathlib
 
 from .core import all_polytwisters
+from .core import section
 from .core.common import normalize_polytwister_name
 from .blender import export_blends
 from .blender import render_blends
@@ -40,9 +41,7 @@ def main():
     animation_gif = root_dir / "animation.gif"
 
     if not sections_dir.exists():
-        # Import here to avoid an unnecessary wait when importing CadQuery, which can be slow.
-        from .core import hard_polytwister_section
-        hard_polytwister_section.render_all_sections_as_objs(
+        section.render_all_sections_as_objs(
             polytwister, num_frames, sections_dir, progress_bar=True
         )
         with open(sections_dir / "config.json", "x") as file:
