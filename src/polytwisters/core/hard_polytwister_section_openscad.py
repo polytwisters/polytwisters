@@ -1,8 +1,10 @@
 """Tools for converting descriptions of hard polytwisters into 3D cross sections using OpenSCAD.
 """
+import argparse
 import math
 import subprocess
 
+from polytwisters.core import common
 from polytwisters.core import hard_polytwisters
 
 LARGE = 100.0
@@ -129,22 +131,37 @@ def make_polytwister_cross_section_openscad_code(polytwister, w):
     return Realizer(w).realize(polytwister)
 
 
-def make_polytwister_cross_section(polytwister, w):
+def make_polytwister_cross_section(polytwister, w, out_stl):
     code = make_polytwister_cross_section_openscad_code(polytwister, w)
-    file_name = "bla.scad"
+    file_name = "temp.scad"
     with open(file_name, "w") as file:
         file.write(code)
     subprocess.run([
         r"C:\Program Files\OpenSCAD\openscad.exe",
         file_name,
         "-o",
-        "out.stl"
+        out_stl, 
     ], check=True)
 
 
 def main():
-    tetratwister = hard_polytwisters.get_great_dodecatwister()
-    make_polytwister_cross_section(tetratwister, 0.1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "polytwister",
+        help="Name of the polytwister. For convenience, underscores are replaced with spaces.",
+    )
+    parser.add_argument(
+        "-w",
+        type=float,
+        help=(
+            "W-coordinate of the 3-space where the cross section is taken."
+        ),
+    )
+    args = parser.parse_args()
+    polytwister_name = common.normalize_polytwister_name(args.polytwister)
+
+    polytwister = hard_polytwisters.get_all_hard_polytwisters()[polytwister_name]
+    make_polytwister_cross_section(polytwister, 0.1, "out.stl")
 
 
 if __name__ == "__main__":

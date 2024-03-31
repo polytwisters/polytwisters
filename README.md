@@ -41,9 +41,9 @@ Export .blend file, which has cameras, lights, and render configuration all set 
 pdm run export_blend scratch/tetratwister_sections scratch/tetratwister.blend
 ```
 
-You can open this file in Blender to see the animation. When opening this file, note that initially the animation is at frame 1, which is empty. Drag around the animation frame to view the cross sections.
+You can open this file in Blender to see the animation. Drag around the animation frame to view the cross sections.
 
-To render with standard settings, you can just open Blender, or this script:
+To render with standard settings, you can use Blender's render feature, or this script:
 
 ```
 pdm run render_blend scratch/tetratwister.blend scratch/tetratwister.mp4
