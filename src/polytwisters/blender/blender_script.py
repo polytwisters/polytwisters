@@ -11,7 +11,7 @@ import warnings
 import bpy
 import mathutils
 
-EXPECTED_BLENDER_VERSION = (3, 3)
+EXPECTED_BLENDER_VERSION = (4, 1)
 
 EPSILON = 1e-10
 LARGE = 10e3
@@ -83,10 +83,8 @@ def make_material_from_config(config):
     return material
 
 
-def shade_auto_smooth():
-    bpy.ops.object.shade_smooth()
-    bpy.context.object.data.use_auto_smooth = True
-    bpy.context.object.data.auto_smooth_angle = math.radians(30.0)
+def shade_smooth_by_angle():
+    bpy.ops.object.shade_smooth_by_angle(angle=math.radians(30.0))
 
 
 def rotation_to_point_to_origin(point):
@@ -239,13 +237,6 @@ def set_sample_count(samples, preview_samples):
     bpy.context.scene.cycles.preview_samples = preview_samples
 
 
-def set_look():
-    """Set the Look setting in Color Management to High Contrast. This controls the nonlinear
-    mapping from physical units to color values that look good on a monitor or projector. See the
-    Blender docs on color management."""
-    bpy.context.scene.view_settings.look = "High Contrast"
-
-
 def set_up_for_render(config):
     """Given a dictionary of render configuration settings, set the following:
 
@@ -272,7 +263,6 @@ def set_up_for_render(config):
     set_image_size(config.get("resolution", 1080), camera)
     set_render_engine()
     set_sample_count(config.get("samples", 16), config.get("preview_samples", 4))
-    set_look()
 
 
 def main():
@@ -339,18 +329,10 @@ def main():
         frame_number = i + 2
 
         deselect_all()
-        bpy.ops.import_scene.obj(filepath=str(path))
+        bpy.ops.wm.obj_import(filepath=str(path))
+        sections.append(bpy.context.active_object)
 
-        # The imported mesh is not automatically made active, but it is selected. Yuck.
-        for object_ in bpy.context.scene.objects:
-            if object_.select_get():
-                break
-        else:
-            raise RuntimeError("Selected mesh not found, may be a bug")
-        bpy.context.view_layer.objects.active = object_
-        sections.append(object_)
-
-        shade_auto_smooth()
+        shade_smooth_by_angle()
 
         if material is None:
             material = make_material_from_config(material_config)

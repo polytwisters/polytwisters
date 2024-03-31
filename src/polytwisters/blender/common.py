@@ -13,7 +13,7 @@ if system == "Darwin":
     PYTHON = ["python3"]
     FFMPEG = "ffmpeg"
 elif system == "Windows":
-    BLENDER_ROOT = pathlib.Path("C:\\Program Files\\Blender Foundation\\Blender 3.3\\")
+    BLENDER_ROOT = pathlib.Path("C:\\Program Files\\Blender Foundation\\Blender 4.1\\")
     BLENDER = str(BLENDER_ROOT / "blender.exe")
     PYTHON = ["py", "-3"]
     FFMPEG = "ffmpeg.exe"
