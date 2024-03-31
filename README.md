@@ -8,7 +8,9 @@ This repository is a project to clean up and port the original POV-Ray code (unp
 
 ## Basic usage
 
-I've managed to run this on macOS, Linux, and Windows. Requirements:
+I have successfully run the entire pipeline on Linux and Windows on x64. (macOS might work but I had issues installing the CadQuery dependency.)
+
+Requirements:
 
 * Python 3.10 (Python 3.11 does not work due to the CadQuery dependency)
 * [PDM](https://pdm.fming.dev/latest/), a Python package manager
