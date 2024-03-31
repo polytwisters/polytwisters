@@ -14,7 +14,8 @@ Requirements:
 
 * Python 3.11 (Python 3.12 does not work due to the CadQuery dependency)
 * [PDM](https://pdm.fming.dev/latest/), a Python package manager
-* Blender 3.3 and ffmpeg for video rendering
+* Blender 4.1
+* ffmpeg for video rendering
 * git-lfs when checking out the repository. There is a single HDRI used for rendering.
 
 I have tried to keep the Python dependency count small: CadQuery, SciPy/NumPy, and tqdm.
