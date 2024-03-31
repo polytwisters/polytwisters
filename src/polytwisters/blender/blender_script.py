@@ -318,9 +318,11 @@ def main():
     obj_paths = [directory / file_name for file_name in metadata["file_names"]]
     remesh = polytwister_spec["type"] == "soft"
 
-    num_frames = len(obj_paths)
-    # One empty frame is added to the beginning and end of the animation.
-    bpy.context.scene.frame_end = num_frames + 2
+    num_proper_frames = len(obj_paths)
+    # One empty frame is added to the beginning and end of the animation. All frames in the middle
+    # I call "proper frames."
+    num_frames = num_proper_frames + 2
+    bpy.context.scene.frame_end = num_frames
 
     sections = []
 
@@ -360,6 +362,12 @@ def main():
         driver = bpy.context.object.driver_add("hide_render").driver
         driver.type = "SCRIPTED"
         driver.expression = f"frame != {frame_number}"
+    
+    # To make things a bit more convenient when opening the .blend file interactively, navigate to
+    # a frame where there is a visible mesh and align with the camera.
+    bpy.context.scene.frame_set(num_proper_frames // 2)
+    area = next(area for area in bpy.context.screen.areas if area.type == "VIEW_3D")
+    area.spaces[0].region_3d.view_perspective = "CAMERA"
 
     if args.output:
         # save_as_mainfile doesn't like relative paths, convert to absolute.
