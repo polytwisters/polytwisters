@@ -6,7 +6,7 @@ import subprocess
 from . import common
 
 
-def render_blend(in_file, out_file):
+def render_blend(in_file, out_dir):
     subprocess.run(
         [
             common.BLENDER,
@@ -14,7 +14,7 @@ def render_blend(in_file, out_file):
             str(in_file),
             # Order matters here! Set up the render format and output path first, then --render-anim.
             "--render-output",
-            out_file.resolve() / "render_####.png",
+            out_dir.resolve() / "render_####.png",
             "--render-format",
             "PNG",
             "--render-anim",
@@ -29,7 +29,8 @@ def render_directory_of_blends(in_dir, out_dir):
     out_dir.mkdir()
     for file_name in manifest["blend_files"]:
         in_file = in_dir / file_name
-        render_blend(in_file, out_dir)
+        out_subdir = out_dir / in_file.stem
+        render_blend(in_file, out_subdir)
 
 
 def main():
