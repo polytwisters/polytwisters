@@ -41,3 +41,21 @@ def make_gif(in_dir, out_file):
         "-loop", "0",
         out_file
     ], check=True)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("in_dir")
+    parser.add_argument("out_file")
+    args = parser.parse_args()
+
+    if parser.out_file.endswith(".mp4"):
+        make_mp4(args.in_dir, args.out_file)
+    elif parser.out_file.endswith(".gif"):
+        make_gif(args.in_dir, args.out_file)
+    else:
+        raise ValueError("Unrecognized output formate, use .mp4 or .gif")
+
+
+if __name__ == "__main__":
+    main()

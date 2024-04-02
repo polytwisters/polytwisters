@@ -28,3 +28,4 @@ compute_all_sections = {call = "polytwisters.core.batch:main"}
 export_blend = {call = "polytwisters.blender.export_blends:main"}
 render_blend = {call = "polytwisters.blender.render_blends:main"}
 run_full_pipeline = {call = "polytwisters.pipeline:main"}
+make_video = {call = "polytwisters.blender.make_video:main"}
