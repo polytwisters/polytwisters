@@ -8,12 +8,14 @@ authors = [
 dependencies = [
     "scipy",
     "numpy",
-    "cadquery",
     "tqdm>=4.66.1",
 ]
 requires-python = "~=3.11"
 readme = "README.md"
 license = {text = "MIT"}
+
+[project.optional-dependencies]
+compute = ["cadquery"]
 
 [build-system]
 requires = ["pdm-backend"]

@@ -2,17 +2,17 @@
 # It is not intended for manual editing.
 
 [metadata]
-groups = ["default"]
+groups = ["default", "compute"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:073edc559d20301b011eb521416d639c3e6d664d437888451c9cd65ae60eea89"
+content_hash = "sha256:ba5a19de3233871fa2ab60138ba90c59cac426417dcc3b2507716a435cec5085"
 
 [[package]]
 name = "cadquery"
 version = "2.4.0"
 requires_python = ">=3.8"
 summary = "CadQuery is a parametric  scripting language for creating and traversing CAD models"
-groups = ["default"]
+groups = ["compute"]
 dependencies = [
     "cadquery-ocp<7.8,>=7.7.0a0",
     "casadi",
@@ -32,7 +32,7 @@ files = [
 name = "cadquery-ocp"
 version = "7.7.2"
 summary = "OCP+VTK wheel with shared library dependencies bundled."
-groups = ["default"]
+groups = ["compute"]
 files = [
     {file = "cadquery_ocp-7.7.2-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:488401fa4d070e3eb17729fb8b6494bd3577f0913c4e901e674c4d8fcd9ac1fe"},
     {file = "cadquery_ocp-7.7.2-cp311-cp311-manylinux_2_35_x86_64.whl", hash = "sha256:2be9408551c03e1c715e3b158b41ce458178ecf530ba644e3e884a5989feb611"},
@@ -46,7 +46,7 @@ files = [
 name = "casadi"
 version = "3.6.5"
 summary = "CasADi -- framework for algorithmic differentiation and numeric optimization"
-groups = ["default"]
+groups = ["compute"]
 dependencies = [
     "numpy",
 ]
@@ -82,7 +82,7 @@ name = "ezdxf"
 version = "1.2.0"
 requires_python = ">=3.9"
 summary = "A Python package to create/manipulate DXF drawings."
-groups = ["default"]
+groups = ["compute"]
 dependencies = [
     "fonttools",
     "numpy",
@@ -115,7 +115,7 @@ name = "fonttools"
 version = "4.50.0"
 requires_python = ">=3.8"
 summary = "Tools to manipulate font files"
-groups = ["default"]
+groups = ["compute"]
 files = [
     {file = "fonttools-4.50.0-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:3dfb102e7f63b78c832e4539969167ffcc0375b013080e6472350965a5fe8048"},
     {file = "fonttools-4.50.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:9e58fe34cb379ba3d01d5d319d67dd3ce7ca9a47ad044ea2b22635cd2d1247fc"},
@@ -142,7 +142,7 @@ name = "multimethod"
 version = "1.9.1"
 requires_python = ">=3.7"
 summary = "Multiple argument dispatching."
-groups = ["default"]
+groups = ["compute"]
 files = [
     {file = "multimethod-1.9.1-py3-none-any.whl", hash = "sha256:52f8f1f2b9d5a4c7adfdcc114dbeeebe3245a4420801e8807e26522a79fb6bc2"},
     {file = "multimethod-1.9.1.tar.gz", hash = "sha256:1589bf52ca294667fd15527ea830127c763f5bfc38562e3642591ffd0fd9d56f"},
@@ -153,7 +153,7 @@ name = "nlopt"
 version = "2.7.1"
 requires_python = ">=3.6"
 summary = "Library for nonlinear optimization, wrapping many algorithms for global and local, constrained or unconstrained, optimization"
-groups = ["default"]
+groups = ["compute"]
 dependencies = [
     "numpy>=1.18.5",
 ]
@@ -168,7 +168,7 @@ name = "nptyping"
 version = "2.0.1"
 requires_python = ">=3.7"
 summary = "Type hints for NumPy."
-groups = ["default"]
+groups = ["compute"]
 dependencies = [
     "numpy>=1.20.0",
 ]
@@ -181,7 +181,7 @@ name = "numpy"
 version = "1.26.4"
 requires_python = ">=3.9"
 summary = "Fundamental package for array computing in Python"
-groups = ["default"]
+groups = ["compute", "default"]
 files = [
     {file = "numpy-1.26.4-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:4c66707fabe114439db9068ee468c26bbdf909cac0fb58686a42a24de1760c71"},
     {file = "numpy-1.26.4-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:edd8b5fe47dab091176d21bb6de568acdd906d1887a4584a15a9a96a1dca06ef"},
@@ -210,7 +210,7 @@ name = "path"
 version = "16.10.0"
 requires_python = ">=3.8"
 summary = "A module wrapper for os.path"
-groups = ["default"]
+groups = ["compute"]
 files = [
     {file = "path-16.10.0-py3-none-any.whl", hash = "sha256:902afa16e63943c1d6f14d9f74a6603beaa56980807e0234098256fd0ac33fed"},
     {file = "path-16.10.0.tar.gz", hash = "sha256:b32b22b76fe810a8ded6d136268cc8b6698ae7c47c29b94a9ea12623f3051e46"},
@@ -221,7 +221,7 @@ name = "pyparsing"
 version = "3.1.2"
 requires_python = ">=3.6.8"
 summary = "pyparsing module - Classes and methods to define and execute parsing grammars"
-groups = ["default"]
+groups = ["compute"]
 files = [
     {file = "pyparsing-3.1.2-py3-none-any.whl", hash = "sha256:f9db75911801ed778fe61bb643079ff86601aca99fcae6345aa67292038fb742"},
     {file = "pyparsing-3.1.2.tar.gz", hash = "sha256:a1bac0ce561155ecc3ed78ca94d3c9378656ad4c94c1270de543f621420f94ad"},
@@ -271,7 +271,7 @@ name = "typing-extensions"
 version = "4.10.0"
 requires_python = ">=3.8"
 summary = "Backported and Experimental Type Hints for Python 3.8+"
-groups = ["default"]
+groups = ["compute"]
 files = [
     {file = "typing_extensions-4.10.0-py3-none-any.whl", hash = "sha256:69b1a937c3a517342112fb4c6df7e72fc39a38e7891a5730ed4985b5214b5475"},
     {file = "typing_extensions-4.10.0.tar.gz", hash = "sha256:b0abd7c89e8fb96f98db18d86106ff1d90ab692004eb746cf6eda2682f91b3cb"},
@@ -281,7 +281,7 @@ files = [
 name = "typish"
 version = "1.9.3"
 summary = "Functionality for types"
-groups = ["default"]
+groups = ["compute"]
 files = [
     {file = "typish-1.9.3-py3-none-any.whl", hash = "sha256:03cfee5e6eb856dbf90244e18f4e4c41044c8790d5779f4e775f63f982e2f896"},
 ]

@@ -20,7 +20,13 @@ Requirements:
 
 I have tried to keep the Python dependency count small: CadQuery, SciPy/NumPy, and tqdm.
 
-Set up repo:
+In general you will want to run:
+
+```
+pdm install -G compute
+```
+
+If you want a more minimal installation that does not include CadQuery:
 
 ```
 pdm install
