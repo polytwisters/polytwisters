@@ -14,7 +14,7 @@ def make_mp4(in_dir, out_file):
     # get around that we have to explicitly add a black background.
     command = [
         FFMPEG,
-        "-framerate", f"{fps}",
+        "-r", f"{fps}",
         # Create a solid black image.
         "-f", "lavfi",
         "-i", f"color=black:s={size}x{size}",
