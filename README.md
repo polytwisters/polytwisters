@@ -20,16 +20,16 @@ Requirements:
 
 I have tried to keep the Python dependency count small: CadQuery, SciPy/NumPy, and tqdm.
 
-In general you will want to run:
-
-```
-pdm install -G compute
-```
-
-If you want a more minimal installation that does not include CadQuery:
+To install:
 
 ```
 pdm install
+```
+
+If you want a more minimal installation that does not include CadQuery (e.g. to just render the Blender files):
+
+```
+pdm install --prod
 ```
 
 ### Single render
