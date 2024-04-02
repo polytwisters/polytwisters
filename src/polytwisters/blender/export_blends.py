@@ -5,11 +5,14 @@ import pathlib
 from . import common
 
 
-def export_directory_as_blend(in_dir, out_file):
+def export_directory_as_blend(in_dir, out_file, config=None):
+    args = [str(in_dir.resolve()), "-o", str(out_file)]
+    if config is not None:
+        args += ["-c", json.dumps(config)]
     common.run_blender_script(
         common.BLENDER_SCRIPT,
         blender_args=[],
-        script_args=[str(in_dir.resolve()), "-o", str(out_file)],
+        script_args=args,
         interactive=False,
     )
 

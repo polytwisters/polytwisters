@@ -284,6 +284,11 @@ def main():
         "--output",
         help="If provided, saves a .blend file to the given location.",
     )
+    parser.add_argument(
+        "-c",
+        "--config",
+        help="If provided, a JSON config string.",
+    )
 
     argv = sys.argv
     for i, argument in enumerate(argv):
@@ -300,22 +305,20 @@ def main():
 
     directory = pathlib.Path(args.dir)
     with open(directory / "manifest.json") as file:
-        metadata = json.load(file)
+        manifest = json.load(file)
 
-    config = {}
-    try:
-        with open(directory / "config.json") as file:
-            config = json.load(file)
-    except FileNotFoundError:
-        pass
+    if args.config is not None:
+        config = json.loads(args.config)
+    else:
+        config = {}
 
     render_config = config.get("render", {})
     set_up_for_render(render_config)
     material_config = config.get("material", {})
     material = None
 
-    polytwister_spec = metadata["polytwister_spec"]
-    obj_paths = [directory / file_name for file_name in metadata["file_names"]]
+    polytwister_spec = manifest["polytwister_spec"]
+    obj_paths = [directory / file_name for file_name in manifest["file_names"]]
     remesh = polytwister_spec["type"] == "soft"
 
     num_proper_frames = len(obj_paths)
