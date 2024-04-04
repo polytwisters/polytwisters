@@ -37,7 +37,7 @@ def scale_workplane_uniform(workplane: cadquery.Workplane, amount: float) -> cad
     return scale_workplane(workplane, amount, amount, amount)
 
 
-def create_cycloplane(w, zenith, azimuth):
+def create_cycloplane(w, zenith, azimuth, scale: float = 1.0):
     """Create a cross section of a cycloplane constructed from a Hopf fiber.
     w is the cross section coordinate, zenith is the angle from the north pole,
     and azimuth is another word for longitude. Said point is transformed via
@@ -53,7 +53,7 @@ def create_cycloplane(w, zenith, azimuth):
         return _create_south_pole_cycloplane(w)
 
     part = cadquery.Workplane()
-    part = part.cylinder(LARGE, 1)
+    part = part.cylinder(LARGE, scale)
 
     # The cylinder is along the Z-axis. Rotate about the X-axis to
     # change Z-axis to Y-axis and match with the original "cyl" object
@@ -75,13 +75,13 @@ def create_cycloplane(w, zenith, azimuth):
     return part
 
 
-def _create_south_pole_cycloplane(w):
+def _create_south_pole_cycloplane(w, scale: float = 1.0):
     """Create the cross section of a cycloplane whose point is located at the
     south pole."""
     if abs(w) >= 1:
         return cadquery.Workplane()
     part = cadquery.Workplane()
-    half_height = math.sqrt(1 - w * w)
+    half_height = math.sqrt(1 - w * w) * scale
     part = part.cylinder(height=half_height * 2, radius=LARGE)
     # See comment in create_cycloplane.
     part = part.rotate((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), math.degrees(math.pi / 2))
@@ -135,10 +135,12 @@ def safe_union(part_1, part_2):
 
 class Realizer:
 
-    def __init__(self, w):
+    def __init__(self, w: float, scale: float):
         # HACK: CadQuery seems to have some problems with polytwister cross sections at w = 0.
         # Annoying.
         self.w = w if abs(w) > EPSILON else EPSILON
+
+        self.scale = scale
 
     def realize(self, polytwister):
         return self.traverse(polytwister["tree"])
@@ -150,6 +152,7 @@ class Realizer:
                 self.w,
                 node["zenith"],
                 node["azimuth"],
+                scale=self.scale,
             )
         elif type_ == "rotated_copies":
             first = self.traverse(node["operand"])
@@ -188,8 +191,8 @@ class Realizer:
             raise ValueError(f'Invalid node type {type_}')
 
 
-def make_polytwister_cross_section(polytwister, w):
-    workplane = Realizer(w).realize(polytwister)
+def make_polytwister_cross_section(polytwister, w: float, scale: float = 1.0):
+    workplane = Realizer(w, scale).realize(polytwister)
     return workplane
 
 
@@ -298,14 +301,6 @@ def get_scale_and_max_w(polytwister):
     return scale, max_w_upper_bound
 
 
-def scale_mesh(mesh, scale):
-    vertices, triangles = mesh
-    if len(vertices) == 0:
-        return mesh
-    vertices = [vertex * scale for vertex in vertices]
-    return vertices, triangles
-
-
 def normalize_mesh(mesh):
     vertices, triangles = mesh
     if len(vertices) == 0:
@@ -338,19 +333,17 @@ def render_one_section_as_obj(
         tolerance=common.DEFAULT_HARD_POLYTWISTER_TOLERANCE,
         angular_tolerance=common.DEFAULT_HARD_POLYTWISTER_ANGULAR_TOLERANCE,
 ):
-    workplane = make_polytwister_cross_section(polytwister, w)
+    workplane = make_polytwister_cross_section(polytwister, w, scale)
     mesh = discretize_workplane(workplane, tolerance=tolerance, angular_tolerance=angular_tolerance)
     if normalize:
         mesh = normalize_mesh(mesh)
-    if scale != 1.0:
-        mesh = scale_mesh(mesh, scale)
     with open(out_file, "x") as f:
         write_mesh_as_obj(mesh, f)
 
 
 def render_one_section_as_svg(polytwister, w, out_file, normalize=False, scale=1.0):
-    workplane = make_polytwister_cross_section(polytwister, w)
-    svg_document = export_svg(workplane, normalize=normalize, additional_scale=scale)
+    workplane = make_polytwister_cross_section(polytwister, w, scale)
+    svg_document = export_svg(workplane, normalize=normalize, additional_scale=1.0)
     with open(out_file, "x") as f:
         f.write(svg_document)
 
@@ -362,9 +355,9 @@ def render_svg_montage(polytwister, num_frames, progress_bar=False):
     if progress_bar:
         iterable = tqdm.tqdm(iterable, f"Computing SVG montage for '{polytwister['name']}'")
     for w, file_stem in iterable:
-        workplane = make_polytwister_cross_section(polytwister, w)
+        workplane = make_polytwister_cross_section(polytwister, w, scale)
         polylines_list.append(render_as_polylines(workplane))
-    return export_montage_as_svg(polylines_list, scale)
+    return export_montage_as_svg(polylines_list)
 
 
 def render_all_sections_as_svgs(polytwister, num_frames, out_dir, progress_bar=False):
