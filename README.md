@@ -6,9 +6,9 @@ This repository is a project to clean up and port the original POV-Ray code (unp
 
 ## Current status
 
-This software is in an early stage. You may have to make some minor changes to get it working on your machine.
+This repo is no longer maintained, but as of March 2025 the project overall is in active development. I'm focused on the research math side of this project and a real-time browser renderer. I then will go back and rewrite this Python/Blender pipeline, since I have found a much smarter strategy for generating the meshes.
 
-I'm actively working on polytwisters as of March 2025, but I'm focused on the technical writing and mathematical research side of this project, and in parallel a real-time renderer in the browser with a GLSL raytracer. After that work is complete, I will go back and rewrite this project as well, as I have found a much smarter strategy for generating the meshes.
+You may have to make some minor changes to get this working on your machine.
 
 ## Basic usage
 
