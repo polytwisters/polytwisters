@@ -4,7 +4,11 @@
 
 This repository is a project to clean up and port the original POV-Ray code (unpublished) to a modern toolchain using Blender's Python scripting capabilities. Computing the polytwisters as meshes enables professional-quality animations, as well as digital fabrication for realizing physical cross sections.
 
-**This software is in an early stage of development.** You will probably have to make some minor changes to get it working on your machine.
+## Current status
+
+This software is in an early stage. You may have to make some minor changes to get it working on your machine.
+
+I'm actively working on polytwisters as of March 2025, but I'm focused on the technical writing and mathematical research side of this project, and in parallel a real-time renderer in the browser with a GLSL raytracer. After that work is complete, I will go back and rewrite this project as well, as I have found a much smarter strategy for generating the meshes.
 
 ## Basic usage
 
