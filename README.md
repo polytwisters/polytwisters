@@ -1,14 +1,10 @@
 # Polytwisters
 
+**This project is superseded by [Polytwisters.com](https://github.com/polytwisters/polytwisters.com) and [Polytwister Mesher](https://github.com/polytwisters/polytwister-mesher/).**
+
 [Polytwisters](https://www.polytope.net/hedrondude/twisters.htm) are a class of strange curved four-dimensional shapes related to [uniform polyhedra](https://en.wikipedia.org/wiki/Uniform_polyhedron) and [Hopf fibration](https://en.wikipedia.org/wiki/Hopf_fibration). They were discovered by Jonathan Bowers circa 2007, who found 222 of these shapes plus three infinite families, and produced POV-Ray renders of their 3D cross sections.
 
 This repository is a project to clean up and port the original POV-Ray code (unpublished) to a modern toolchain using Blender's Python scripting capabilities. Computing the polytwisters as meshes enables professional-quality animations, as well as digital fabrication for realizing physical cross sections.
-
-## Current status
-
-This repo is no longer maintained, but as of March 2025 the project overall is in active development. I'm focused on the research math side of this project and a real-time browser renderer. I then will go back and rewrite this Python/Blender pipeline, since I have found a much smarter strategy for generating the meshes.
-
-You may have to make some minor changes to get this working on your machine.
 
 ## Basic usage
 
